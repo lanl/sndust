@@ -1,0 +1,430 @@
+[
+  {
+    "parameters": {
+      "A": 8.64726,
+      "B": 19.0422,
+      "a0": 1.281,
+      "key_species": [
+        "C"
+      ],
+      "sigma": 1400.0
+    },
+    "products": [
+      [
+        1.0,
+        "C(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "C"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 4.8418,
+      "B": 16.5566,
+      "a0": 1.411,
+      "key_species": [
+        "Fe"
+      ],
+      "sigma": 1800.0
+    },
+    "products": [
+      [
+        1.0,
+        "Fe(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Fe"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 9.31326,
+      "B": 30.7771,
+      "a0": 1.932,
+      "key_species": [
+        "Fe",
+        "S"
+      ],
+      "sigma": 380.0
+    },
+    "products": [
+      [
+        1.0,
+        "FeS(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Fe"
+      ],
+      [
+        1.0,
+        "S"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 5.36975,
+      "B": 17.4349,
+      "a0": 1.684,
+      "key_species": [
+        "Si"
+      ],
+      "sigma": 800.0
+    },
+    "products": [
+      [
+        1.0,
+        "Si(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Si"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 5.58902,
+      "B": 16.6071,
+      "a0": 1.615,
+      "key_species": [
+        "Ti"
+      ],
+      "sigma": 1510.0
+    },
+    "products": [
+      [
+        1.0,
+        "Ti(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Ti"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 4.67733,
+      "B": 16.7596,
+      "a0": 1.421,
+      "key_species": [
+        "Cr"
+      ],
+      "sigma": 1880.0
+    },
+    "products": [
+      [
+        1.0,
+        "Cr(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Cr"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 5.0388,
+      "B": 16.8372,
+      "a0": 1.383,
+      "key_species": [
+        "Co"
+      ],
+      "sigma": 1936.0
+    },
+    "products": [
+      [
+        1.0,
+        "Co(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Co"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 5.0913,
+      "B": 17.1559,
+      "a0": 1.377,
+      "key_species": [
+        "Ni"
+      ],
+      "sigma": 1924.0
+    },
+    "products": [
+      [
+        1.0,
+        "Ni(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Ni"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 12.6028,
+      "B": 38.1507,
+      "a0": 2.08,
+      "key_species": [
+        "SiO"
+      ],
+      "sigma": 605.0
+    },
+    "products": [
+      [
+        1.0,
+        "SiO2(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "SiO"
+      ],
+      [
+        1.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 11.9237,
+      "B": 33.1593,
+      "a0": 1.646,
+      "key_species": [
+        "Mg"
+      ],
+      "sigma": 1100.0
+    },
+    "products": [
+      [
+        1.0,
+        "MgO(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Mg"
+      ],
+      [
+        1.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 13.2889,
+      "B": 39.1687,
+      "a0": 1.805,
+      "key_species": [
+        "Fe"
+      ],
+      "sigma": 400.0
+    },
+    "products": [
+      [
+        1.0,
+        "Fe3O4(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        3.0,
+        "Fe"
+      ],
+      [
+        4.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 11.129,
+      "B": 31.985,
+      "a0": 1.682,
+      "key_species": [
+        "Fe"
+      ],
+      "sigma": 580.0
+    },
+    "products": [
+      [
+        1.0,
+        "FeO(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Fe"
+      ],
+      [
+        1.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 14.8934,
+      "B": 37.3825,
+      "a0": 1.702,
+      "key_species": [
+        "Si",
+        "C"
+      ],
+      "sigma": 1800.0
+    },
+    "products": [
+      [
+        1.0,
+        "SiC(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Si"
+      ],
+      [
+        1.0,
+        "C"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 16.4696,
+      "B": 37.2301,
+      "a0": 1.689,
+      "key_species": [
+        "Ti",
+        "C"
+      ],
+      "sigma": 1242.0
+    },
+    "products": [
+      [
+        1.0,
+        "TiC(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Ti"
+      ],
+      [
+        1.0,
+        "C"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 18.4788,
+      "B": 45.3543,
+      "a0": 1.718,
+      "key_species": [
+        "Al"
+      ],
+      "sigma": 690.0
+    },
+    "products": [
+      [
+        1.0,
+        "Al2O3(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        2.0,
+        "Al"
+      ],
+      [
+        3.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 25.0129,
+      "B": 72.0015,
+      "a0": 2.319,
+      "key_species": [
+        "Mg",
+        "Si"
+      ],
+      "sigma": 400.0
+    },
+    "products": [
+      [
+        1.0,
+        "MgSiO3(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Mg"
+      ],
+      [
+        1.0,
+        "Si"
+      ],
+      [
+        3.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  }
+]

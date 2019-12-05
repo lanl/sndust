@@ -1,0 +1,14 @@
+{
+  "particle_inputfile"  : "./data/TEMP_initdata.hdf5",
+  "hydrorun_inputfile" : "./data/TEMP_hydrorundata.dat",
+  "network_file"      : "./data/reactions.json",
+  "abs_tol"           : 1.0E-8,
+  "rel_tol"           : 1.0E-12,
+  "max_dt"            : 1.0E1,
+  "screen_every"      : 20000,
+  "store_every"       : 16,
+  "write_every"       : 2048,
+  "align_tend_value"  : 31556926,
+  "align_tend_resolution": 1
+}
+
