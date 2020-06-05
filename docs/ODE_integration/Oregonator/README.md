@@ -47,8 +47,10 @@ Run statistics (number of integration steps failed/succeed) are printed on `stde
 
 Simulation data is produced data file `f<f_value>.dat`
 
-
-```
+To check for stability, run 
+```{engine=sh}
 python check_stable.py -i f1.945000.dat -t 1.0E-8
 python check_stable.py -i f0.500315.dat -t 1.0E-8
 ```
+
+The `-t` parameter is the tolerance; `1.0E-8` is taken from the tolerance of the integration, but you may vary this value if you wish.
