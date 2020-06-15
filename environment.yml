@@ -1,3 +1,4 @@
+name: nudust
 channels:
   - conda-forge
   - defaults
