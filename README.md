@@ -13,5 +13,32 @@ The top-level file `runtime_settings.json` includes several parameters that cont
 - `*_every` are the output options. `screen_every` is the very much the slowest
 
 ### Dependancies
-sndust needs numpy, scipy, numba, and mpi4py. A conda package is being put together to make this explicit
+The python packages necessary to build are:
+- python v3.7
+- numpy
+- scipy
+- numba
+- mpi4py
+- matplotlib
+- h5py
+- periodictable
+
+The provided `environment.yml` file defines an environment that installs these packages using `conda`
+
+'''{engine=sh}
+$> conda env create -f environment.yml
+'''
+
+### Running
+`sndust` can run in either serial or parallel. The runtime configuration must be provided, see `runtime_settings.json` for an example setup
+
+'''{engine=sh}
+$> python main.py -C runtime_settings.json
+'''
+
+For parallel, invoke using `mpi4py.futures`
+
+'''{engine=sh}
+$> mpiexec -n 4 python -m mpi4py.futures main.py -N 4 -C runtime_settings.json
+'''
 
