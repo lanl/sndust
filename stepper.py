@@ -10,9 +10,18 @@ from network import Network, nucleation_numpy_type
 from physical_constants import k_B, stdP, istdP
 from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27
 
+# some definitions
+# ----------------
+# jit: Just In-Time. Code will be compiled at run-time.
+
+# controls if @jit compile in debug mode
 S_DEBUG    = False
+# if True, throw an error at startup if code wrapped in @jit cannot be converted from python
+# if False, code that cannot be converted is allowed to run in python
 S_NOPYTHON = True
+# compile @jit code with threading enabled
 S_PARALLEL = False
+# compile @jit code with relaxed precision requirements, allowing for more aggresive optimization
 S_FASTMATH = True
 
 # calculation data for ode
