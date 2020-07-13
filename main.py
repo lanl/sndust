@@ -1,3 +1,10 @@
+###############################################################################
+# main.py
+# -----------------------------------------------------------------------------
+# author: Christopher Mauney (mauneyc@lanl.gov)
+# description: main driver of nudust
+# date: 06/19/2020
+###############################################################################
 import os, sys, argparse, logging, json, traceback
 import itertools as it
 
@@ -13,9 +20,10 @@ from stepper import Stepper
 from solver import SolverSpec, Solver
 from observer import Observer
 
-ONLY_MODEL_2 = True
+ONLY_MODEL_2 = True # for now we only have test data
 #np.seterr(invalid='raise')
 
+# single-rank driver.
 def duster(settings, model_id, zone_id):
     assert ONLY_MODEL_2 and model_id == 2, "ONLY HAVE HYDRO DATA FOR MODEL_IDX=2"
 
@@ -48,6 +56,7 @@ def duster(settings, model_id, zone_id):
         traceback.print_exc(file=sys.stdout)
         obs.dump(solv._steps)
     finally:
+        # emit the last state to output
         obs.runout(solv._steps, settings["align_tend_value"], res=settings["align_tend_resolution"])
     return msg
 
@@ -65,7 +74,7 @@ if __name__ == "__main__":
 
     model_id = 2
     zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbers
-    if 0:
+    if 0: # this feature is not enabled by default.
         # TODO: better schedualing
         with MPIPoolExecutor(max_workers=args.ncpu) as pool:
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):

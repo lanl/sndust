@@ -1,3 +1,11 @@
+###############################################################################
+# main.py
+# -----------------------------------------------------------------------------
+# author: Christopher Mauney (mauneyc@lanl.gov)
+# description: objects representing the gas
+# date: 06/19/2020
+###############################################################################
+
 import numpy as np
 from typing import List, Tuple, Dict
 import periodictable as pt
@@ -18,6 +26,7 @@ class SNGas(object):
 
         self._c0 = np.zeros(net.solution_size)
 
+        # load initial species concentrations
         for sp, idx in net.species_map.items():
             try:
                 self._c0[idx] = part.composition[sp]
@@ -25,6 +34,7 @@ class SNGas(object):
                 print(f"WARNING: can't find {sp} in particle data")
                 self._c0[idx] = 0.0
 
+        # processess fast-forming species
         self.premake("C","O","CO", net)
         self.premake("Si","O","SiO", net)
 
@@ -33,6 +43,7 @@ class SNGas(object):
         # self._fx = InterpolatedUnivariateSpline(part.times, part.position[:,0], k=1)
         # self._fy = InterpolatedUnivariateSpline(part.times, part.position[:,1], k=1)
 
+        # generate interpolators
         self._fT = Akima1DInterpolator(part.times, part.temperatures)
         self._fD = Akima1DInterpolator(part.times, part.densities)
         self._fx = Akima1DInterpolator(part.times, part.position)
