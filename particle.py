@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     p = load_particle( args.inputfile, args.hydrofile, args.mid, args.pid)
-
+    print(p.composition)
     import matplotlib.pyplot as plt
 
     plt.loglog(p.times, p.densities)

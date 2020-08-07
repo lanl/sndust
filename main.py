@@ -15,6 +15,7 @@ from observer import Observer
 
 ONLY_MODEL_2 = True
 #np.seterr(invalid='raise')
+TEST_ENDTIME = 1000
 
 def duster(settings, model_id, zone_id):
     assert ONLY_MODEL_2 and model_id == 2, "ONLY HAVE HYDRO DATA FOR MODEL_IDX=2"
@@ -34,7 +35,9 @@ def duster(settings, model_id, zone_id):
 
     gas     = SNGas(p, net)
     step    = Stepper(gas, net)
-    spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound = p.times[p.last_idx], absolute_tol = settings["abs_tol"], \
+    # spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound = p.times[p.last_idx], absolute_tol = settings["abs_tol"], \
+    #                 relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
+    spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound=TEST_ENDTIME, absolute_tol = settings["abs_tol"], \
                     relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
     solv    = Solver(spec, step)
     obs     = Observer(output_f, net, gas, step, solv, screen_every=settings["screen_every"], store_every=settings["store_every"], write_every=settings["write_every"])
@@ -49,6 +52,14 @@ def duster(settings, model_id, zone_id):
         obs.dump(solv._steps)
     finally:
         obs.runout(solv._steps, settings["align_tend_value"], res=settings["align_tend_resolution"])
+        ## TIMING
+        from stepper import S_DEBUG, S_FASTMATH, S_NOPYTHON, S_PARALLEL
+        print(f"DEBUG={S_DEBUG}, NOPYTHON={S_NOPYTHON}, FASTMATH={S_FASTMATH}, PARALLEL={S_PARALLEL}")
+        for k, v in step._call_timers.items():
+            _ncall = len(v) - 1
+            _ntottime = sum(v[1:])
+            _avgcalltime = (_ntottime / _ncall) * 1.0E6
+            print(f"{k:>16} = {_avgcalltime} us ({_ncall} calls)")
     return msg
 
 
@@ -71,7 +82,8 @@ if __name__ == "__main__":
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
                 print(result)
     else:
-        duster(settings, model_id, zone_ids[0])
+        res_msg = duster(settings, model_id, zone_ids[0])
+        print(res_msg)
         # for iz in zone_ids:
         #     duster(settings, model_id, iz)
 

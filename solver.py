@@ -15,7 +15,8 @@ class SolverSpec(NamedTuple):
     max_timestep: np.float64
     absolute_tol: np.float64
     relative_tol: np.float64
-    integrator: integrate.OdeSolver = integrate.LSODA
+    integrator: integrate.OdeSolver = integrate.DOP853
+    # integrator: integrate.OdeSolver = integrate.LSODA
 
 class Solver(object):
     def __init__(self, spec: SolverSpec, stepper: Stepper):

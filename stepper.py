@@ -1,26 +1,28 @@
 import os, sys, logging, itertools
 from typing import List, Tuple, NamedTuple
+from time import time
 
 import numpy as np
-from numba import from_dtype, njit, prange, double, void, int32, jit, vectorize
+from numba import from_dtype, njit, prange, double, void, int32, jit, vectorize, guvectorize
 
 from gas import SNGas
 from network import Network, nucleation_numpy_type
 
 from physical_constants import k_B, stdP, istdP
 from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27
+from util.helpers import time_fn
 
 # some definitions
 # ----------------
 # jit: Just In-Time. Code will be compiled at run-time.
 
 # controls if @jit compile in debug mode
-S_DEBUG    = False
+S_DEBUG    = True
 # if True, throw an error at startup if code wrapped in @jit cannot be converted from python
 # if False, code that cannot be converted is allowed to run in python
 S_NOPYTHON = True
 # compile @jit code with threading enabled
-S_PARALLEL = False
+S_PARALLEL = True
 # compile @jit code with relaxed precision requirements, allowing for more aggresive optimization
 S_FASTMATH = True
 
@@ -45,10 +47,8 @@ def dust_pre(calc_t, dust_t, y, cb):
     for i in prange(calc_t.size):
         calc_t[i].ks_jdx = np.argmin(y[dust_t[i].keysp_idx[:dust_t[i].nkeysp]])
         calc_t[i].cbar = cb[dust_t[i].keysp_idx[calc_t[i].ks_jdx]]
-
         for j in range(dust_t[i].nr):
-            calc_t[i].r_nu[i] = dust_t[i].react_nu[j] / dust_t[i].react_nu[calc_t[i].ks_jdx]
-
+            calc_t[i].r_nu[j] = dust_t[i].react_nu[j] / dust_t[i].react_nu[calc_t[i].ks_jdx]
         calc_t[i].S = 0.0
         calc_t[i].Js = 0.0
         calc_t[i].dadt = 0.0
@@ -60,7 +60,7 @@ def dust_state(calc_t, dust_t, y, T):
     kT = k_B * T
 
     # hopefully this gets executed in parallel
-    for i in prange(calc_t.size):
+    for i in range(calc_t.size):
         if dust_t[i].active == 0: continue
 
         # the kj-ndx refers to the "local" position in the list of ks for this reaction
@@ -144,11 +144,16 @@ def dust_moments(calc_t, dust_t, y, cbar, dydt):
 
 @jit((double, double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def expand(xpand, y, dydt):
-    dydt += y * xpand
+    for i in prange(y.size):
+        dydt[i] += xpand * y[i]
+# @guvectorize([(double, double[:], double[:])], '(),(n)->(n)', nopython=S_NOPYTHON)
+# def expand(xpand, y, dydt):
+#     for i in range(y.size):
+#         dydt[i] = xpand * y[i]
 
 @jit((numba_dust_type[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def check_active(dust_t, y):
-    for i in range(dust_t.size):
+    for i in prange(dust_t.size):
         if np.any(y[dust_t[i].keysp_idx[:dust_t[i].nkeysp]] < 1.0E-1):
             dust_t[i].active = 0
 
@@ -177,26 +182,61 @@ class Stepper(object):
         self._cbar = np.zeros(self._net.solution_size)
         self._dust_par[:]["active"] = 1
 
+        self._call_timers = {"dust_pre" : list(),
+                             "check_active" :list(),
+                             "dust_state" : list(),
+                             "dust_moments" : list(),
+                             "expand" : list(),
+                             "T_interp" : list(),
+                             "r_interp" : list()}
+
     def initial_value(self) -> np.array:
         return self._gas.concentration_0
 
 
     def __call__(self, t: np.float64, y: np.array) -> np.array:
         # get interpolant data
+        _start = time()
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
+        self._call_timers["T_interp"].append((time() - _start))
+
+        _start = time()
         rho = self._gas.Density(t)
         drho = self._gas.Density(t, derivative=1)
+        self._call_timers["r_interp"].append((time() - _start))
 
         # call calculators
         xpnd = drho / rho
         vol = self._gas.mass_0 / rho
         self._cbar[:] = self._gas.cbar(vol)
-        dydt = _f(self._dust_calc, self._dust_par, y, self._cbar, T, dT)
+        # dydt = _f(self._dust_calc, self._dust_par, y, self._cbar, T, dT)
+
+        dydt = np.zeros(y.size)
+
+        _start = time()
+        dust_pre(self._dust_calc, self._dust_par, y, self._cbar)
+        self._call_timers["dust_pre"].append((time() - _start))
+        if dT < 0:
+            _start = time()
+            check_active(self._dust_par, y)
+            self._call_timers["check_active"].append((time() - _start))
+
+            _start = time()
+            dust_state(self._dust_calc, self._dust_par, y, T)
+            self._call_timers["dust_state"].append((time() - _start))
+
+            _start = time()
+            dust_moments(self._dust_calc, self._dust_par, y, self._cbar, dydt)
+            self._call_timers["dust_moments"].append((time() - _start))
+
+        _start = time()
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
+        self._call_timers["expand"].append((time() - _start))
 
         return dydt
 
     def emit_done(self):
         return np.all(self._dust_par["active"] == 0)
+
 
