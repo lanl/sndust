@@ -17,12 +17,12 @@ from util.helpers import time_fn
 # jit: Just In-Time. Code will be compiled at run-time.
 
 # controls if @jit compile in debug mode
-S_DEBUG    = True
+S_DEBUG    = False
 # if True, throw an error at startup if code wrapped in @jit cannot be converted from python
 # if False, code that cannot be converted is allowed to run in python
 S_NOPYTHON = True
 # compile @jit code with threading enabled
-S_PARALLEL = True
+S_PARALLEL = False
 # compile @jit code with relaxed precision requirements, allowing for more aggresive optimization
 S_FASTMATH = True
 
