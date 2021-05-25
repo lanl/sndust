@@ -31,9 +31,9 @@ def destroy(p, net):
     abun_list = np.asarray([p.composition[s]  for s in species])
     n_tot = sum([abun_list[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(species)])
     grain_names = net._species_dust
-    dest = np.zeros(len(T))
+    dest = np.zeros((len(T),16))
     for i in list(range(len(T))):
-        dec = calc_TOTAL_dadt(grain_names,T,n_tot,abun_list,species,vc) / 1E4
+        dec = calc_TOTAL_dadt(grain_names,T[i],n_tot,abun_list,species,vc[i]) / 1E4
         dest[i] = dec
     return dest
 
@@ -42,11 +42,10 @@ def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc):
     destruct_list = np.zeros(len(grain_list))
     vd = vc / 100000
     si = np.sqrt( (vd ** 2) / (2 * kB_erg * T))
-    for s in si:
-        if s > 10:
-            return non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd)
-        else:
-            return THERMAL_dadt(grain_list,T,n,abun,abun_name)
+    if si > 10:
+        return non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd)
+    else:
+        return THERMAL_dadt(grain_list,T,n,abun,abun_name)
 
 #will need to pass in an array or dictionary or all the abundances
 def THERMAL_dadt(grain_list,T,n,abun,abun_name):
