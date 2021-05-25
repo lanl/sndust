@@ -12,6 +12,7 @@ from network import Network
 from stepper import Stepper
 from solver import SolverSpec, Solver
 from observer import Observer
+from destroy import *
 
 ONLY_MODEL_2 = True
 #np.seterr(invalid='raise')
@@ -35,6 +36,8 @@ def duster(settings, model_id, zone_id):
 
     gas     = SNGas(p, net)
     step    = Stepper(gas, net)
+    destruction = destroy(p, net)
+    print(destruction)
     # spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound = p.times[p.last_idx], absolute_tol = settings["abs_tol"], \
     #                 relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
     spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound=TEST_ENDTIME, absolute_tol = settings["abs_tol"], \
