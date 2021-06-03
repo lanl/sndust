@@ -1,7 +1,6 @@
 import os, sys, logging, itertools
 from typing import List, Tuple, NamedTuple
 from time import time
-
 import numpy as np
 from numba import from_dtype, njit, prange, double, void, int32, jit, vectorize, guvectorize
 
@@ -11,6 +10,10 @@ from network import Network, nucleation_numpy_type
 from physical_constants import k_B, stdP, istdP
 from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27
 from util.helpers import time_fn
+
+from destroy import *
+from particle import Particle, load_particle
+
 
 # some definitions
 # ----------------
@@ -151,6 +154,12 @@ def expand(xpand, y, dydt):
 #     for i in range(y.size):
 #         dydt[i] = xpand * y[i]
 
+@jit((double, double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
+def erode(dadt, y, dydt):
+    for i in prange(y.size):
+        dydt[i] += dadt * y[i]
+
+
 @jit((numba_dust_type[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def check_active(dust_t, y):
     for i in prange(dust_t.size):
@@ -170,9 +179,10 @@ def _f(calc_t, dust_t, y, cb, T, dT):
 
 #############################################################
 class Stepper(object):
-    def __init__(self, gas: SNGas, net: Network):
+    def __init__(self, gas: SNGas, net: Network, part: Particle):
         self._gas = gas
         self._net = net
+        self._part = part
         self._dust_calc = np.empty(self._net.ND, dtype=dust_calc)
 
         # TODO: hacking now to finish, come back and fix this garbage
@@ -187,6 +197,7 @@ class Stepper(object):
                              "dust_state" : list(),
                              "dust_moments" : list(),
                              "expand" : list(),
+                             "erode" : list(),
                              "T_interp" : list(),
                              "r_interp" : list()}
 
@@ -196,15 +207,15 @@ class Stepper(object):
 
     def __call__(self, t: np.float64, y: np.array) -> np.array:
         # get interpolant data
-        _start = time()
+        _start = time.time()
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
-        self._call_timers["T_interp"].append((time() - _start))
+        self._call_timers["T_interp"].append((time.time() - _start))
 
-        _start = time()
+        _start = time.time()
         rho = self._gas.Density(t)
         drho = self._gas.Density(t, derivative=1)
-        self._call_timers["r_interp"].append((time() - _start))
+        self._call_timers["r_interp"].append((time.time() - _start))
 
         # call calculators
         xpnd = drho / rho
@@ -214,29 +225,34 @@ class Stepper(object):
 
         dydt = np.zeros(y.size)
 
-        _start = time()
+        _start = time.time()
         dust_pre(self._dust_calc, self._dust_par, y, self._cbar)
-        self._call_timers["dust_pre"].append((time() - _start))
+        self._call_timers["dust_pre"].append((time.time() - _start))
         if dT < 0:
-            _start = time()
+            _start = time.time()
             check_active(self._dust_par, y)
-            self._call_timers["check_active"].append((time() - _start))
+            self._call_timers["check_active"].append((time.time() - _start))
 
-            _start = time()
+            _start = time.time()
             dust_state(self._dust_calc, self._dust_par, y, T)
-            self._call_timers["dust_state"].append((time() - _start))
+            self._call_timers["dust_state"].append((time.time() - _start))
 
-            _start = time()
+            _start = time.time()
             dust_moments(self._dust_calc, self._dust_par, y, self._cbar, dydt)
-            self._call_timers["dust_moments"].append((time() - _start))
+            self._call_timers["dust_moments"].append((time.time() - _start))
 
-        _start = time()
+        _start = time.time()
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
-        self._call_timers["expand"].append((time() - _start))
+        self._call_timers["expand"].append((time.time() - _start))
+
+        dadt = destroy(self._part, self._net)
+        erode(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
+        self._call_timers["erode"].append((time.time() - _start))
 
         return dydt
 
     def emit_done(self):
         return np.all(self._dust_par["active"] == 0)
+
 
 
