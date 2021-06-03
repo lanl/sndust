@@ -1,0 +1,18 @@
+grains = {
+"C(s)" : {"react": ['C'], "reacAMT" : [1]}, 
+"Fe(s)" : {"react": ['Fe'], "reacAMT" : [1]},
+"FeS(s)" : {"react": ['Fe','S'], "reacAMT" : [1,1]},
+"Si(s)" : {"react": ['Si'], "reacAMT" : [1]},
+"Ti(s)" : {"react": ['Ti'], "reacAMT" : [1]},
+"Cr(s)" : {"react": ['Cr'], "reacAMT" : [1]},
+"Co(s)" : {"react": ['Co'], "reacAMT" : [1]},
+"Ni(s)" : {"react": ['Ni'], "reacAMT" : [1]},
+"SiO2(s)" : {"react": ['Si','O'], "reacAMT" : [1,2]},
+"MgO(s)" : {"react": ['Mg','O'], "reacAMT" : [1,1]},
+"Fe3O4(s)" : {"react": ['Fe','O'], "reacAMT" : [3,4]},
+"FeO(s)" : {"react": ['Fe','O'], "reacAMT" : [1,1]},
+"SiC(s)" : {"react": ['Si','C'], "reacAMT" : [1,1]},
+"TiC(s)" : {"react": ['Ti','C'], "reacAMT" : [1,1]},
+"Al2O3(s)" : {"react": ['Al','O'], "reacAMT" : [2,3]},
+"MgSiO3(s)" : {"react": ['Mg','Si','O'], "reacAMT" : [1,1,3]},
+}
