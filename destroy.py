@@ -38,6 +38,7 @@ def destroy(g: SNGas, p: Particle, net: Network):
     grain_names = net._species_dust
     dest = np.zeros((len(T),16))
     print('one call')
+    print(g._c0)
     for i in list(range(len(T))):
         dec = calc_TOTAL_dadt(grain_names,T[i],n_tot,abun_list,species,vc[i],p,g,net,volume[i]) / 1E4
         dest[i] = dec
@@ -73,7 +74,7 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,p: Particle,g: SNGas,net: Network
             prod_coef = grainsCOMP[grain]["reacAMT"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
-                g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
+                g._c0[sidx] = g._c0[sidx] - yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
             dadt += pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
         dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n
         destruct_list[GRidx] = dadt
@@ -98,7 +99,7 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,p: Particle,g: SNGas,net: 
             prod_coef = grainsCOMP[grain]["reacAMT"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
-                g._c0[sidx] = g._c0[sidx] + yp.Y(x)/(volume*np.sum(prod_coef))*coef
+                g._c0[sidx] = g._c0[sidx] - yp.Y(x)/(volume*np.sum(prod_coef))*coef
             dadt += pref * yp.Y(x)
         dadt *= (v["md"] * amu2g * vd) / (2. * v["rhod"]) * n
         destruct_list[int(GRidx)] = dadt
