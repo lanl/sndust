@@ -10,7 +10,7 @@ from atomic_mass import *
 import numba
 from numba import jit
 import time
-from erosionDict import *
+from erosionDict import grainsCOMP
 from particle import *
 from network import *
 from gas import *
@@ -69,8 +69,11 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,p: Particle,g: SNGas,net: Network
             ## these two lines take forever
             start = time.time()
             yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_abun_name]["mi"],zd = v["zd"],zi = ions[i_abun_name]["zi"],K = v["K"])
-            sidx = net.sidx(grain)
-            g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/volume
+            grnComps = grainsCOMP[grain]["react"]
+            prod_coef = grainsCOMP[grain]["reacAMT"]
+            for cidx,coef in enumerate(prod_coef):
+                sidx = net.sidx(grnComps[cidx])
+                g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
             dadt += pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
         dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n
         destruct_list[GRidx] = dadt
@@ -91,8 +94,11 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,p: Particle,g: SNGas,net: 
             pref = val
             x = 1./2. * ions[i_abun_name]["mi"] * amu2g / 1000 * np.power(vd / 1000,2) * JtoEV
             yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_abun_name]["mi"],zd = v["zd"],zi = ions[i_abun_name]["zi"],K = v["K"])
-            sidx = net.sidx(grain)
-            g._c0[sidx] = g._c0[sidx] + yp.Y(x)/volume
+            grnComps = grainsCOMP[grain]["react"]
+            prod_coef = grainsCOMP[grain]["reacAMT"]
+            for cidx,coef in enumerate(prod_coef):
+                sidx = net.sidx(grnComps[cidx])
+                g._c0[sidx] = g._c0[sidx] + yp.Y(x)/(volume*np.sum(prod_coef))*coef
             dadt += pref * yp.Y(x)
         dadt *= (v["md"] * amu2g * vd) / (2. * v["rhod"]) * n
         destruct_list[int(GRidx)] = dadt
