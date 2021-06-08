@@ -29,7 +29,7 @@ g2amu = 6.022e+23
 amu2g = 1. / g2amu
 JtoEV = 6.242e+18
 
-def destroy(g: SNGas, p: Particle, net: Network, vol, rho, dydt, calc_t, dust_t):
+def destroy(g: SNGas, p: Particle, net: Network, vol, rho, dydt):
     volume = vol
     T = p.temperatures
     vc = p.velocity
@@ -41,17 +41,17 @@ def destroy(g: SNGas, p: Particle, net: Network, vol, rho, dydt, calc_t, dust_t)
     grain_names = net._species_dust
     dest = np.zeros((len(T),16))
     for i in list(range(len(T))):
-        dec = calc_TOTAL_dadt(grain_names,T[i],n_tot,abun_list,species,vc[i],g,net,volume,rho, dydt, calc_t, dust_t) / 1E4
+        dec = calc_TOTAL_dadt(grain_names,T[i],n_tot,abun_list,species,vc[i],g,net,volume,rho, dydt) / 1E4
         dest[i] = dec
     return dest
 
 #will need to pass in an array or dictionary or all the abundances
-def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volume,rho, dydt, calc_t, dust_t):
+def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volume,rho, dydt):
     destruct_list = np.zeros(len(grain_list))
     vd = vc / 100000
     si = np.sqrt( (vd ** 2) / (2 * kB_erg * T))
     if si > 10:
-        return non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g,net,volume,rho, dydt, calc_t, dust_t)
+        return non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g,net,volume,rho, dydt)
     else:
         return THERMAL_dadt(grain_list,T,n,abun,abun_name,g,net,volume)
 
@@ -82,7 +82,7 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume):
     return destruct_list
 
 #will need to pass in an array or dictionary or all the abundances
-def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volume,rho, dydt, calc_t, dust_t):
+def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volume,rho, dydt):
     destruct_list = np.zeros(len(grain_list))
     for GRidx,grain in enumerate(grain_list):
         cross_sec = np.cbrt(dydt[GRidx+0]/dydt[GRidx+3])

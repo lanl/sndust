@@ -121,7 +121,7 @@ def dust_moments(calc_t, dust_t, y, cbar, dydt):
                              + (jdbl / dust_t[i].a0) * calc_t[i].dadt * y[gidx + j - 1]
 
         dydt[dust_t[i].react_idx[:dust_t[i].nr]] -= calc_t[i].cbar * dydt[gidx + 3] * calc_t[i].r_nu[:dust_t[i].nr]
-        print(dust_t[i].react_idx[:dust_t[i].nr])
+
 #########################
 # chemistry, after network change I haven't put these back in yer
 #########################
@@ -244,7 +244,7 @@ class Stepper(object):
         _start = time.time()
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["expand"].append((time.time() - _start))
-        dadt = destroy(self._gas, self._part, self._net, vol, rho, dydt, self._dust_calc, self._dust_par)
+        dadt = destroy(self._gas, self._part, self._net, vol, rho, dydt)
         erode(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["erode"].append((time.time() - _start))
 
