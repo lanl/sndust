@@ -107,7 +107,7 @@ def dust_state(calc_t, dust_t, y, T):
 
 @jit((numba_dust_calc[:], numba_dust_type[:], double[:], double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def dust_moments(calc_t, dust_t, y, cbar, dydt):
-
+    
     for i in prange(calc_t.size):
         if dust_t[i].active == 0: continue
         if calc_t[i].ncrit < 2.0: continue
@@ -121,14 +121,7 @@ def dust_moments(calc_t, dust_t, y, cbar, dydt):
                              + (jdbl / dust_t[i].a0) * calc_t[i].dadt * y[gidx + j - 1]
 
         dydt[dust_t[i].react_idx[:dust_t[i].nr]] -= calc_t[i].cbar * dydt[gidx + 3] * calc_t[i].r_nu[:dust_t[i].nr]
-
-def deceleration(n_h, T, rho, abun_gas, velo, a_cross, mass, dvdt):
-    G_tot = np.zeros(len(abun))
-    for i in abun:
-    	s = m[i] * velo**2 /(2*kb*T)
-    	G_tot[i] = 8*s/(3*np.sqrt(np.pi))*(1+9*np.pi*s**2/64)**2
-    dvdt = -3*kb*T/(2*a_cross*rho)*np.sum(abun*G)
-
+        print(dust_t[i].react_idx[:dust_t[i].nr])
 #########################
 # chemistry, after network change I haven't put these back in yer
 #########################
@@ -251,8 +244,7 @@ class Stepper(object):
         _start = time.time()
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["expand"].append((time.time() - _start))
-
-        dadt = destroy(self._gas, self._part, self._net)
+        dadt = destroy(self._gas, self._part, self._net, vol, rho, dydt, self._dust_calc, self._dust_par)
         erode(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["erode"].append((time.time() - _start))
 
