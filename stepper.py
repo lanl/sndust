@@ -114,7 +114,6 @@ def dust_moments(calc_t, dust_t, y, cbar, dydt):
 
         gidx = dust_t[i].prod_idx[0]
         dydt[gidx] = calc_t[i].Js / calc_t[i].cbar
-
         for j in range(1, N_MOMENTS):
             jdbl = np.float64(j)
             dydt[gidx + j] = dydt[gidx] * np.power(calc_t[i].ncrit, jdbl / 3.) \
@@ -244,7 +243,8 @@ class Stepper(object):
         _start = time.time()
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["expand"].append((time.time() - _start))
-        dadt = destroy(self._gas, self._part, self._net, vol, rho, dydt)
+
+        dadt = destroy(self._gas, self._part, self._net, vol, rho, y)
         erode(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["erode"].append((time.time() - _start))
 
