@@ -6,7 +6,7 @@ from scipy.integrate import quad
 import matplotlib.pyplot as plt
 
 import numba
-from numba import jitclass
+from numba.experimental import jitclass
 from numba import float64
 
 onethird = 1./3.

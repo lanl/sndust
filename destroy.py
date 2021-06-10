@@ -31,6 +31,7 @@ amu2g = 1. / g2amu
 JtoEV = 6.242e+18
 
 def destroy(g: SNGas, p: Particle, net: Network, vol, rho, y):
+    print(y)
     volume = vol
     T = p.temperatures
     vc = p.velocity 

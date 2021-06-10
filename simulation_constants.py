@@ -22,4 +22,5 @@ hydro_testing_file = "/home/mauneyc/scratch/students/dust/utils/binary_chk/mdl2.
 comp_testing_file = "/home/mauneyc/scratch/students/dust/utils/composition_PM1.50E+01_XE1.69E+00_ID002.dat"
 dust_testing_file = "temporary_dust_data.dat"
 
-
+dTime = 0 # global timestep
+numBins = 20 # number of size bins

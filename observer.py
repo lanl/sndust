@@ -9,7 +9,7 @@ import json
 import h5py as h5
 import scipy.integrate as integrate
 
-from simulation_constants import N_MOMENTS
+from simulation_constants import N_MOMENTS,dTime,numBins
 from physical_constants import sec2day
 from network import Network
 from gas import SNGas
@@ -28,7 +28,7 @@ class Observer(object):
         self._step = step
         self._solv = solv
         self._ode = self._solv._ode
-
+        
         self._obsfname = f"{obs_file}.hdf5"
         self._logfname = f"{obs_file}.log"
 
@@ -43,7 +43,8 @@ class Observer(object):
             ("x", np.float64),
             *[ (f"N_{s}", np.float64) for s in self._net._species_gas ],
             *[ (f"M_{s}", np.float64, (N_MOMENTS,)) for s in self._net._species_dust ],
-            *[ (f"calc_{s}", dust_calc) for s in self._net._species_dust ]
+            *[ (f"calc_{s}", dust_calc) for s in self._net._species_dust ],
+            *[ (f"sizeBin_{s}", np.float64, (numBins,)) for s in self._net._species_dust ] # trying to add size bins to int
         ])
 
         self._store_chunk = self._write_every // self._store_every
@@ -83,8 +84,10 @@ class Observer(object):
 
         for i, s in enumerate(self._net._species_dust):
             _didx = self._net._NG + i * N_MOMENTS
+            _sidx = self._net._NG + len(self._net._species_dust) * N_MOMENTS + i * numBins
             self._store[self._store_idx][f"M_{s}"] = self._ode.y[_didx : _didx + N_MOMENTS]
             self._store[self._store_idx][f"calc_{s}"] = self._step._dust_calc[i]
+            self._store[self._store_idx][f"sizeBin_{s}"] = self._ode.y[_sidx : _sidx + numBins] # trying to add size bins to int
         self._store_idx += 1
 
     def dump(self, step:int):
@@ -119,7 +122,7 @@ class Observer(object):
             print(_scrn, file=_lf)
 
     def __call__(self, step: np.int32, force_screen: bool = False):
-
+        dTime = self._ode.t - self._ode.t_old
         if step % self._store_every == 0:
             _xtime0 = default_timer()
             self._store_h5dat(step, self._ode.t)
@@ -179,6 +182,10 @@ class Observer(object):
                     _moms = ", ".join([ f"M_{i}[{m: >6.5E}]" for i, m in enumerate(s[_mkey]) ])
                     _scrn += f"{species}: S[ {s[_ckey]['S']: >6.5E} ] J[ {s[_ckey]['Js']: >6.5E} ]\n"
                     _scrn += f"++++ moments ++++ {_moms}\n"
+                    _skey = f"sizeBin_{species}" # trying to add size bins to int
+                    _sizes = ", ".join([ f"sizeBin_{i}" for i, m in enumerate(s[_skey]) ]) # trying to add size bins to int
+                    _scrn += f"+++ size bins +++ {_sizes}\n" # trying to add size bins to int
+
 
             tot_call_time = np.sum([self._tot_dumptime, self._tot_screentime, self._tot_storetime])
             timpct = [ _tim / tot_call_time * 100.0 for _tim in [self._tot_dumptime, self._tot_screentime, self._tot_storetime] ]

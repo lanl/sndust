@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import periodictable as pt
 
-from simulation_constants import N_MOMENTS, MAX_REACTANTS, MAX_PRODUCTS, fourpiover3
+from simulation_constants import N_MOMENTS, MAX_REACTANTS, MAX_PRODUCTS, fourpiover3, numBins
 from physical_constants import amu2g, ang2cm
 
 Composition = Dict[str, int]
@@ -127,7 +127,7 @@ class Network:
 
     @property
     def solution_size(self) -> np.int32:
-        return self._NG + N_MOMENTS * self._ND
+        return self._NG + N_MOMENTS * self._ND + self._ND * numBins # trying to get bins
 
     @property
     def NG(self):

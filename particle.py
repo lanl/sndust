@@ -24,6 +24,7 @@ class Particle:
     position: np.array = None
     mass: np.array = None
     volume: np.array = None
+    velocity: np.array = None
 
     first_idx: int = 0
     last_idx: int = -1
@@ -55,6 +56,7 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int) -> Particle
     p.densities = tdat["rho"][select_idx][:-1]
     p.mass = tdat["mass"][select_idx][:-1]
     p.position = tdat["xc"][select_idx][:-1]
+    p.velocity = tdat["vc"][select_idx][:-1]
     p.composition = comp
 
     p.volume = p.mass / p.densities[p.first_idx]
@@ -69,7 +71,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     p = load_particle( args.inputfile, args.hydrofile, args.mid, args.pid)
-    print(p.composition)
     import matplotlib.pyplot as plt
 
     plt.loglog(p.times, p.densities)

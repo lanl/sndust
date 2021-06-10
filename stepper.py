@@ -8,7 +8,7 @@ from gas import SNGas
 from network import Network, nucleation_numpy_type
 
 from physical_constants import k_B, stdP, istdP
-from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27
+from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, numBins
 from util.helpers import time_fn
 
 from destroy import *
@@ -201,7 +201,7 @@ class Stepper(object):
                              "r_interp" : list()}
 
     def initial_value(self) -> np.array:
-        return self._gas.concentration_0
+        return self._gas.concentration_0 # try to add bins
 
 
     def __call__(self, t: np.float64, y: np.array) -> np.array:
@@ -245,7 +245,7 @@ class Stepper(object):
         self._call_timers["expand"].append((time.time() - _start))
 
         dadt = destroy(self._gas, self._part, self._net, vol, rho, y)
-        erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:])
+        #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:])
         self._call_timers["erode"].append((time.time() - _start))
 
         return dydt
