@@ -33,9 +33,9 @@ JtoEV = 6.242e+18
 def destroy(g: SNGas, p: Particle, net: Network, vol, rho, y):
     volume = vol
     T = p.temperatures
-    vc = p.velocity
-    species = list(net._species_gas)
-    abun_list = np.zeros(len(species))
+    vc = p.velocity 
+    species = list(net._species_gas) #name of species
+    abun_list = np.zeros(len(species)) # concentration
     for idx,val in enumerate(species):
         abun_list[idx] = g._c0[idx]
     n_tot = sum([abun_list[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(species)])
@@ -63,9 +63,6 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
     for GRidx,grain in enumerate(grain_list):
         if y[n_gas +(GRidx*4+0)] == 0:
             continue
-        else:
-            print('we got dust')
-            print(y)
         grain = str(grain.replace('(s)',''))
         if grain not in data:
             destruct_list[GRidx] = 0
@@ -95,9 +92,6 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
     for GRidx,grain in enumerate(grain_list):
         if y[n_gas +(GRidx*4+0)] == 0:
             continue
-        else:
-            print('we got dust')
-            print(y)
         cross_sec = np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)])
         velo = calc_dvdt(abun[0], T, rho, abun, abun_name, vd, cross_sec, g, net) * dTime
         grain = str(grain.replace('(s)',''))

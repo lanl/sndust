@@ -245,7 +245,7 @@ class Stepper(object):
         self._call_timers["expand"].append((time.time() - _start))
 
         dadt = destroy(self._gas, self._part, self._net, vol, rho, y)
-        erode(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
+        erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:])
         self._call_timers["erode"].append((time.time() - _start))
 
         return dydt
