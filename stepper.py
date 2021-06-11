@@ -8,7 +8,7 @@ from gas import SNGas
 from network import Network, nucleation_numpy_type
 
 from physical_constants import k_B, stdP, istdP
-from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, numBins, NDust
+from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, numBins, NDust, _edges
 from util.helpers import time_fn
 
 from destroy import *
@@ -155,9 +155,13 @@ def expand(xpand, y, dydt):
 
 @jit((double[:], double[:], double[:], int32), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def erode(dadt, y, dydt, NG):
-    start = NG + NDust * 4
+    start = NG + NDust * N_MOMENTS
     for i in prange(y.size):
-        dydt[start + i] += dadt[start + i] + y[start + i]
+        new_size = dadt[i] + _edges[i]
+        if new_size > _edges[i+1]:
+            dydt[i+1] += 1
+        else:
+            dydt[i] += 1	
 
 def conc_update(d_conc, dydt, y):
     for i in prange(y.size):
