@@ -89,13 +89,13 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
     for GRidx,grain in enumerate(grain_list):
         if y[n_gas +(GRidx*4+0)] == 0:
             continue
-        cross_sec = np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)]) * 
-        velo = calc_dvdt(abun[0], T, rho, abun, abun_name, vd, cross_sec, g, net) * dTime
-        grain = str(grain.replace('(s)',''))
         if grain not in data:
             destruct_list[GRidx] = 0
             continue
         v = data[grain]
+        cross_sec = np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)]) * v["a0"]# in cm 
+        velo = calc_dvdt(abun[0], T, rho, abun, abun_name, vd, cross_sec, g, net) * dTime
+        grain = str(grain.replace('(s)',''))
         dadt = 0
         for idx,val in enumerate(abun):
             i_abun_name = list(abun_name)[idx]
