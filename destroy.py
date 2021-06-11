@@ -11,7 +11,6 @@ import numba
 from numba import jit
 import time
 from erosionDict import grainsCOMP
-from particle import *
 from network import *
 from gas import *
 from simulation_constants import dTime
@@ -30,22 +29,16 @@ g2amu = 6.022e+23
 amu2g = 1. / g2amu
 JtoEV = 6.242e+18
 
-def destroy(g: SNGas, p: Particle, net: Network, vol, rho, y):
-    print(y)
-    volume = vol
-    T = p.temperatures
-    vc = p.velocity 
+def destroy(g: SNGas, net: Network, volume, rho, y, T, vc):
     species = list(net._species_gas) #name of species
     abun_list = np.zeros(len(species)) # concentration
     for idx,val in enumerate(species):
         abun_list[idx] = g._c0[idx]
     n_tot = sum([abun_list[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(species)])
     grain_names = net._species_dust
-    dest = np.zeros((len(T),16))
-    for i in list(range(len(T))):
-        dec = calc_TOTAL_dadt(grain_names,T[i],n_tot,abun_list,species,vc[i],g,net,volume,rho,y) / 1E4
-        dest[i] = dec
-    return dest
+    
+    dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,abun_list,species,vc[i],g,net,volume,rho,y) / 1E4
+    return dest, g_change
 
 #will need to pass in an array or dictionary or all the abundances
 def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volume,rho, y):
@@ -59,6 +52,7 @@ def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volum
 
 #will need to pass in an array or dictionary or all the abundances
 def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
+    g_c0_change = np.zeros(len(abun_name))
     destruct_list = np.zeros(len(grain_list))
     n_gas = net._species_gas
     for GRidx,grain in enumerate(grain_list):
@@ -80,14 +74,16 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
             prod_coef = grainsCOMP[grain]["reacAMT"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
-                g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
+                g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                #g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
             dadt += pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
         dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n
         destruct_list[GRidx] = dadt
-    return destruct_list
+    return destruct_list, g_c0_change
 
 #will need to pass in an array or dictionary or all the abundances
 def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volume,rho, y):
+    g_c0_change = np.zeros(len(abun_name))
     destruct_list = np.zeros(len(grain_list))
     n_gas = len(net._species_gas)
     for GRidx,grain in enumerate(grain_list):
@@ -110,11 +106,12 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
             prod_coef = grainsCOMP[grain]["reacAMT"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
-                g._c0[sidx] = g._c0[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                #g._c0[sidx] = g._c0[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef))
             dadt += pref * yp.Y(x)
         dadt *= (v["md"] * amu2g * velo) / (2. * v["rhod"]) * n
         destruct_list[int(GRidx)] = dadt
-    return destruct_list
+    return destruct_list, g_c0_change
 
 def calc_dvdt(n_h, T, rho, abun, abun_name,velo, a_cross, g: SNGas, net: Network):
     G_tot = np.zeros(len(abun))
