@@ -8,7 +8,7 @@ from gas import SNGas
 from network import Network, nucleation_numpy_type
 
 from physical_constants import k_B, stdP, istdP
-from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, numBins, NDust, _edges
+from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, dTime, numBins, NDust, _edges
 from util.helpers import time_fn
 
 from destroy import *
@@ -153,16 +153,24 @@ def expand(xpand, y, dydt):
 #     for i in range(y.size):
 #         dydt[i] = xpand * y[i]
 
-@jit((double[:], double[:], double[:], int32), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
-def erode(dadt, y, dydt, NG):
+@jit((double[:], double[:], double[:], int32, numba_dust_calc[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
+def erode_grow(dadt, y, dydt, NG, dust_calc):
     start = NG + NDust * N_MOMENTS
-    for i in prange(y.size):
-        new_size = dadt[i] + _edges[i]
+    for i in prange(NDust):
+        #check if new grain, calculate size, and add it to the correct bin
+        if dydt[NG + (i*4 +1)] != 0.0:
+            new_grn_sz = dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
+            idx = np.where(_edges > new_grn_sz)[0] -1
+            dydt[NG + (NDust*4) + (i*20 + idx)] +=1
+        #new_size = dadt[i] + _edges[i]
+        new_size = dadt[i]*dTime + dust_calc[i].dadt*dTime
         if new_size > _edges[i+1]:
-            dydt[i+1] += 1
+            dydt[NG + (NDust*4) + (i*numBins +1)] += 1
+            dydt[NG + (NDust*4) + (i*numBins +1)] -= 1
         else:
-            dydt[i] += 1	
+            dydt[NG + (NDust*4) + (i*numBins +1)] += 1	
 
+@jit((double[:], double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def conc_update(d_conc, dydt, y):
     for i in prange(y.size):
         dydt[i] += d_conc[i] + y[i]
@@ -253,9 +261,10 @@ class Stepper(object):
         self._call_timers["expand"].append((time.time() - _start))
 
         dadt, d_conc = destroy(self._gas, self._net, vol, rho, y, T, v_gas)
-        #conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
-        #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:], self._net.NG)
-        #self._call_timers["erode"].append((time.time() - _start))
+        conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
+        erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:], self._net.NG, self._dust_calc)
+        erode_grow(dadt, y, dydt, self._net.NG, self._dust_calc)
+        self._call_timers["erode"].append((time.time() - _start))
 
         return dydt
 

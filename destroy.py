@@ -38,7 +38,8 @@ def destroy(g: SNGas, net: Network, volume, rho, y, T, vc):
     grain_names = net._species_dust
     
     dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,abun_list,species,vc,g,net,volume,rho,y)
-    return dest/1E8, g_change # dest is now in angstroms
+
+    return dest, g_change # dest is in cm
 
 #will need to pass in an array or dictionary or all the abundances
 def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volume,rho, y):
@@ -48,7 +49,7 @@ def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volum
     if si > 10:
         return non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g,net,volume,rho, y)
     else:
-        return THERMAL_dadt(grain_list,T,n,abun,abun_name,g,net,volume)
+        return THERMAL_dadt(grain_list,T,n,abun,abun_name,g,net,volume,y)
 
 #will need to pass in an array or dictionary or all the abundances
 def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
