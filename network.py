@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import periodictable as pt
 
-from simulation_constants import N_MOMENTS, MAX_REACTANTS, MAX_PRODUCTS, fourpiover3, numBins
+from simulation_constants import N_MOMENTS, MAX_REACTANTS, MAX_PRODUCTS, fourpiover3, numBins, NDust
 from physical_constants import amu2g, ang2cm
 
 Composition = Dict[str, int]
@@ -105,7 +105,7 @@ class Network:
                     #    _idx += 1
                         self._NG += 1
                         self._species_gas.append(species)
-
+        NDust = self._ND
         for i in range(self._NG):
             self._species[self._species_gas[i]] = i
 

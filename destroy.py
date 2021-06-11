@@ -37,8 +37,8 @@ def destroy(g: SNGas, net: Network, volume, rho, y, T, vc):
     n_tot = sum([abun_list[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(species)])
     grain_names = net._species_dust
     
-    dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,abun_list,species,vc[i],g,net,volume,rho,y) / 1E4
-    return dest, g_change
+    dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,abun_list,species,vc,g,net,volume,rho,y)
+    return dest/1E8, g_change # dest is now in angstroms
 
 #will need to pass in an array or dictionary or all the abundances
 def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volume,rho, y):
@@ -77,7 +77,7 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
                 g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
                 #g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
             dadt += pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
-        dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n
+        dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n # in cm/s
         destruct_list[GRidx] = dadt
     return destruct_list, g_c0_change
 
@@ -89,7 +89,7 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
     for GRidx,grain in enumerate(grain_list):
         if y[n_gas +(GRidx*4+0)] == 0:
             continue
-        cross_sec = np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)])
+        cross_sec = np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)]) * 
         velo = calc_dvdt(abun[0], T, rho, abun, abun_name, vd, cross_sec, g, net) * dTime
         grain = str(grain.replace('(s)',''))
         if grain not in data:
@@ -109,7 +109,7 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
                 g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
                 #g._c0[sidx] = g._c0[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef))
             dadt += pref * yp.Y(x)
-        dadt *= (v["md"] * amu2g * velo) / (2. * v["rhod"]) * n
+        dadt *= (v["md"] * amu2g * velo) / (2. * v["rhod"]) * n # cm/s
         destruct_list[int(GRidx)] = dadt
     return destruct_list, g_c0_change
 

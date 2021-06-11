@@ -157,11 +157,11 @@ def expand(xpand, y, dydt):
 def erode(dadt, y, dydt, NG):
     start = NG + NDust * 4
     for i in prange(y.size):
-        dydt[start + i] += dadt[start + i] * y[start + i]
+        dydt[start + i] += dadt[start + i] + y[start + i]
 
 def conc_update(d_conc, dydt, y):
     for i in prange(y.size):
-        dydt[i] += d_conc[i] * y[i]
+        dydt[i] += d_conc[i] + y[i]
 
 @jit((numba_dust_type[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def check_active(dust_t, y):
