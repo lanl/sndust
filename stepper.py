@@ -8,7 +8,7 @@ from gas import SNGas
 from network import Network, nucleation_numpy_type
 
 from physical_constants import k_B, stdP, istdP
-from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, numBins
+from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, twothird, fourpi, fourover27, numBins, NDust
 from util.helpers import time_fn
 
 from destroy import *
@@ -153,11 +153,15 @@ def expand(xpand, y, dydt):
 #     for i in range(y.size):
 #         dydt[i] = xpand * y[i]
 
-@jit((double, double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
-def erode(dadt, y, dydt):
+@jit((double[:], double[:], double[:], int32), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
+def erode(dadt, y, dydt, NG):
+    start = NG + NDust * 4
     for i in prange(y.size):
-        dydt[i] += dadt * y[i]
+        dydt[start + i] += dadt[start + i] * y[start + i]
 
+def conc_update(d_conc, dydt, y):
+    for i in prange(y.size):
+        dydt[i] += d_conc[i] * y[i]
 
 @jit((numba_dust_type[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def check_active(dust_t, y):
@@ -178,10 +182,9 @@ def _f(calc_t, dust_t, y, cb, T, dT):
 
 #############################################################
 class Stepper(object):
-    def __init__(self, gas: SNGas, net: Network, part: Particle):
+    def __init__(self, gas: SNGas, net: Network):
         self._gas = gas
         self._net = net
-        self._part = part
         self._dust_calc = np.empty(self._net.ND, dtype=dust_calc)
 
         # TODO: hacking now to finish, come back and fix this garbage
@@ -207,6 +210,7 @@ class Stepper(object):
     def __call__(self, t: np.float64, y: np.array) -> np.array:
         # get interpolant data
         _start = time.time()
+        v_gas = double(self._gas.Velocity(t))
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
         self._call_timers["T_interp"].append((time.time() - _start))
@@ -244,9 +248,10 @@ class Stepper(object):
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
         self._call_timers["expand"].append((time.time() - _start))
 
-        dadt = destroy(self._gas, self._part, self._net, vol, rho, y)
-        #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:])
-        self._call_timers["erode"].append((time.time() - _start))
+        dadt, d_conc = destroy(self._gas, self._net, vol, rho, y, T, v_gas)
+        #conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
+        #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:], self._net.NG)
+        #self._call_timers["erode"].append((time.time() - _start))
 
         return dydt
 

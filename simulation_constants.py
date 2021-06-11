@@ -24,3 +24,6 @@ dust_testing_file = "temporary_dust_data.dat"
 
 dTime = 0 # global timestep
 numBins = 20 # number of size bins
+bin_low = 1 # in angstroms
+bin_high = 100000 # in angstroms
+NDust = 0
