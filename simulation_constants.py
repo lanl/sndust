@@ -7,6 +7,7 @@ twopi = 2. * np.pi
 fourpi = 2. * twopi
 fourpiover3 = fourpi / 3.
 fourover27 = 4. / 27.
+onehalf = 1. / 2.
 
 div6 = 1./6.
 div12 = 1./12.
@@ -24,9 +25,9 @@ dust_testing_file = "temporary_dust_data.dat"
 
 dTime = 0 # global timestep
 
-numBins = 20 # number of size bins
+numBins = 5 # number of size bins
 bin_low = 0 # 10^x in angstroms
 bin_high = 5 # 10^x in angstroms
-_edges = np.logspace(bin_low, bin_high, numBins + 1) # the 1st bin is _edges[1-1] to _edges[1], the last is _edges[numBins-1] to _edges[numBins] 
+edges = np.logspace(bin_low, bin_high, numBins + 1) # the 1st bin is _edges[1-1] to _edges[1], the last is _edges[numBins-1] to _edges[numBins] 
 
 NDust = 0

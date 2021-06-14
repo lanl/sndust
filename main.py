@@ -15,7 +15,7 @@ from observer import Observer
 
 ONLY_MODEL_2 = True
 #np.seterr(invalid='raise')
-TEST_ENDTIME = 100000
+TEST_ENDTIME = 3.14E7*3.14
 
 def duster(settings, model_id, zone_id):
     assert ONLY_MODEL_2 and model_id == 2, "ONLY HAVE HYDRO DATA FOR MODEL_IDX=2"
@@ -34,7 +34,6 @@ def duster(settings, model_id, zone_id):
     print(f"M{model_id} (Z{zone_id}) loaded, beginnging run: output[{output_f}]")
 
     gas     = SNGas(p, net)
-    #step    = Stepper(gas, net)
     step    = Stepper(gas, net)
     # spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound = p.times[p.last_idx], absolute_tol = settings["abs_tol"], \
     #                 relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])

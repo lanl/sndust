@@ -13,7 +13,7 @@ import time
 from erosionDict import grainsCOMP
 from network import *
 from gas import *
-from simulation_constants import dTime
+from simulation_constants import dTime, edges, numBins, onehalf, N_MOMENTS
 from atomic_mass import AMU
 
 onethird = 1./3.
@@ -38,7 +38,6 @@ def destroy(g: SNGas, net: Network, volume, rho, y, T, vc):
     grain_names = net._species_dust
     
     dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,abun_list,species,vc,g,net,volume,rho,y)
-
     return dest, g_change # dest is in cm
 
 #will need to pass in an array or dictionary or all the abundances
@@ -54,7 +53,7 @@ def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volum
 #will need to pass in an array or dictionary or all the abundances
 def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
     g_c0_change = np.zeros(len(abun_name))
-    destruct_list = np.zeros(len(grain_list))
+    destruct_list = np.zeros(len(grain_list)*numBins)
     n_gas = net._species_gas
     for GRidx,grain in enumerate(grain_list):
         if y[n_gas +(GRidx*4+0)] == 0:
@@ -68,8 +67,6 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
         for idx,val in enumerate(abun):
             i_abun_name = list(abun_name)[idx]
             pref = val * np.sqrt( 8.0 * kB_erg * T / (np.pi * ions[i_abun_name]["mi"] * amu2g))
-            ## these two lines take forever
-            start = time.time()
             yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_abun_name]["mi"],zd = v["zd"],zi = ions[i_abun_name]["zi"],K = v["K"])
             grnComps = grainsCOMP[grain]["react"]
             prod_coef = grainsCOMP[grain]["reacAMT"]
@@ -79,39 +76,40 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
                 #g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
             dadt += pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
         dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n # in cm/s
-        destruct_list[GRidx] = dadt
+        destruct_list[GRidx*numBins:GRidx*numBins+numBins] = dadt
     return destruct_list, g_c0_change
 
 #will need to pass in an array or dictionary or all the abundances
 def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volume,rho, y):
     g_c0_change = np.zeros(len(abun_name))
-    destruct_list = np.zeros(len(grain_list))
+    destruct_list = np.zeros(len(grain_list)*numBins)
     n_gas = len(net._species_gas)
-    for GRidx,grain in enumerate(grain_list):
-        if y[n_gas +(GRidx*4+0)] == 0:
-            continue
-        if grain not in data:
-            destruct_list[GRidx] = 0
-            continue
-        v = data[grain]
-        cross_sec = np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)]) * v["a0"]# in cm 
-        velo = calc_dvdt(abun[0], T, rho, abun, abun_name, vd, cross_sec, g, net) * dTime
-        grain = str(grain.replace('(s)',''))
-        dadt = 0
-        for idx,val in enumerate(abun):
-            i_abun_name = list(abun_name)[idx]
-            pref = val
-            x = 1./2. * ions[i_abun_name]["mi"] * amu2g / 1000 * np.power(vd / 1000,2) * JtoEV
-            yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_abun_name]["mi"],zd = v["zd"],zi = ions[i_abun_name]["zi"],K = v["K"])
-            grnComps = grainsCOMP[grain]["react"]
-            prod_coef = grainsCOMP[grain]["reacAMT"]
-            for cidx,coef in enumerate(prod_coef):
-                sidx = net.sidx(grnComps[cidx])
-                g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
-                #g._c0[sidx] = g._c0[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef))
-            dadt += pref * yp.Y(x)
-        dadt *= (v["md"] * amu2g * velo) / (2. * v["rhod"]) * n # cm/s
-        destruct_list[int(GRidx)] = dadt
+    for sizeIDX in list(range(numBins)):
+        for GRidx,grain in enumerate(grain_list):
+            if y[n_gas +(GRidx*4+0)] == 0:
+                continue
+            if grain not in data:
+                destruct_list[GRidx] = 0
+                continue
+            v = data[grain]
+            cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf #np.cbrt(y[n_gas +(GRidx*4+0)]/y[n_gas+(GRidx*4+3)]) * v["a0"]# in cm 
+            velo = calc_dvdt(abun[0], T, rho, abun, abun_name, vd, cross_sec, g, net) * dTime
+            grain = str(grain.replace('(s)',''))
+            dadt = 0
+            for idx,val in enumerate(abun):
+                i_abun_name = list(abun_name)[idx]
+                pref = val
+                x = 1./2. * ions[i_abun_name]["mi"] * amu2g / 1000 * np.power(vd / 1000,2) * JtoEV
+                yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_abun_name]["mi"],zd = v["zd"],zi = ions[i_abun_name]["zi"],K = v["K"])
+                grnComps = grainsCOMP[grain]["react"]
+                prod_coef = grainsCOMP[grain]["reacAMT"]
+                for cidx,coef in enumerate(prod_coef):
+                    sidx = net.sidx(grnComps[cidx])
+                    g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                    #g._c0[sidx] = g._c0[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                dadt += pref * yp.Y(x)
+            dadt *= (v["md"] * amu2g * velo) / (2. * v["rhod"]) * n # cm/s
+            destruct_list[int(GRidx)*numBins + sizeIDX] = dadt
     return destruct_list, g_c0_change
 
 def calc_dvdt(n_h, T, rho, abun, abun_name,velo, a_cross, g: SNGas, net: Network):
