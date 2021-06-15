@@ -47,7 +47,7 @@ def dust_pre(calc_t, dust_t, y, cb):
         calc_t[i].cbar = cb[dust_t[i].keysp_idx[calc_t[i].ks_jdx]]
 
         for j in range(dust_t[i].nr):
-            calc_t[i].r_nu[i] = dust_t[i].react_nu[j] / dust_t[i].react_nu[calc_t[i].ks_jdx]
+            calc_t[i].r_nu[j] = dust_t[i].react_nu[j] / dust_t[i].react_nu[calc_t[i].ks_jdx]
 
         calc_t[i].S = 0.0
         calc_t[i].Js = 0.0
