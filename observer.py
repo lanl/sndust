@@ -183,7 +183,7 @@ class Observer(object):
                     _scrn += f"{species}: S[ {s[_ckey]['S']: >6.5E} ] J[ {s[_ckey]['Js']: >6.5E} ]\n"
                     _scrn += f"++++ moments ++++ {_moms}\n"
                     _skey = f"sizeBin_{species}" # trying to add size bins to int
-                    _sizes = ", ".join([ f"sizeBin_{i}" for i, m in enumerate(s[_skey]) ]) # trying to add size bins to int
+                    _sizes = ", ".join([ f"sizeBin_{i}[{m: >6.5E}]" for i, m in enumerate(s[_skey]) ]) # trying to add size bins to int
                     _scrn += f"+++ size bins +++ {_sizes}\n" # trying to add size bins to int
 
 
