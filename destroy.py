@@ -54,7 +54,7 @@ def calc_TOTAL_dadt(grain_list,T,n,abun,abun_name,vc,g: SNGas,net: Network,volum
 def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
     g_c0_change = np.zeros(len(abun_name))
     destruct_list = np.zeros(len(grain_list)*numBins)
-    n_gas = net._species_gas
+    n_gas = net.NG
     for GRidx,grain in enumerate(grain_list):
         if y[n_gas +(GRidx*4+0)] == 0:
             continue

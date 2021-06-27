@@ -32,7 +32,7 @@ class Particle:
     composition: Dict[str, float] = field(default_factory=dict)
 
 # TODO clarify and unify the input data
-def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int) -> Particle:
+def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int, start_scan: np.float64=None) -> Particle:
     p = Particle()
 
     hf = h5.File(h5fn, 'r')
@@ -59,7 +59,14 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int) -> Particle
     p.velocity = tdat["vc"][select_idx][:-1]
     p.composition = comp
 
+    if start_scan is not None:
+        while p.temperatures[p.first_idx] > start_scan:
+            if p.first_idx > p.temperatures.size - 1:
+                raise ValueError(f"no temperature less than {start_scan} in data")
+            p.first_idx += 1
+
     p.volume = p.mass / p.densities[p.first_idx]
+
     return p
 
 if __name__ == "__main__":

@@ -38,6 +38,7 @@ class SNGas(object):
         self._fx = Akima1DInterpolator(part.times, part.position)
         self._fV = Akima1DInterpolator(part.times, part.velocity)
 
+
     def premake(self, s1, s2, sp, net):
         try:
             idx1 = net.sidx(s1)

@@ -14,7 +14,7 @@ from util.helpers import time_fn
 from destroy import *
 from particle import Particle, load_particle
 
-from print_msg import *
+#from print_msg import *
 
 # some definitions
 # ----------------
@@ -230,7 +230,7 @@ class Stepper(object):
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
         self._call_timers["T_interp"].append((time.time() - _start))
-
+        
         _start = time.time()
         rho = self._gas.Density(t)
         drho = self._gas.Density(t, derivative=1)
@@ -247,18 +247,18 @@ class Stepper(object):
         _start = time.time()
         dust_pre(self._dust_calc, self._dust_par, y, self._cbar)
         self._call_timers["dust_pre"].append((time.time() - _start))
-        if dT < 0:
-            _start = time.time()
-            check_active(self._dust_par, y)
-            self._call_timers["check_active"].append((time.time() - _start))
+#        if dT < 0:
+        _start = time.time()
+        check_active(self._dust_par, y)
+        self._call_timers["check_active"].append((time.time() - _start))
 
-            _start = time.time()
-            dust_state(self._dust_calc, self._dust_par, y, T)
-            self._call_timers["dust_state"].append((time.time() - _start))
+        _start = time.time()
+        dust_state(self._dust_calc, self._dust_par, y, T)
+        self._call_timers["dust_state"].append((time.time() - _start))
 
-            _start = time.time()
-            dust_moments(self._dust_calc, self._dust_par, y, self._cbar, dydt)
-            self._call_timers["dust_moments"].append((time.time() - _start))
+        _start = time.time()
+        dust_moments(self._dust_calc, self._dust_par, y, self._cbar, dydt)
+        self._call_timers["dust_moments"].append((time.time() - _start))
 
         _start = time.time()
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
