@@ -36,6 +36,7 @@ class SNGas(object):
         self._fT = Akima1DInterpolator(part.times, part.temperatures)
         self._fD = Akima1DInterpolator(part.times, part.densities)
         self._fx = Akima1DInterpolator(part.times, part.position)
+        self._fV = Akima1DInterpolator(part.times, part.velocity)
 
     def premake(self, s1, s2, sp, net):
         try:
@@ -91,3 +92,6 @@ class SNGas(object):
 
     def Density(self, time: np.float64, derivative=0) -> np.float64:
         return self._fD(time, nu=derivative)
+
+    def Velocity(self, time: np.float64, derivative=0) -> np.float64:
+        return self._fV(time, nu=derivative)

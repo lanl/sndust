@@ -24,6 +24,7 @@ class Particle:
     position: np.array = None
     mass: np.array = None
     volume: np.array = None
+    velocity: np.array = None
 
     first_idx: int = 0
     last_idx: int = -1
@@ -31,7 +32,7 @@ class Particle:
     composition: Dict[str, float] = field(default_factory=dict)
 
 # TODO clarify and unify the input data
-def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int) -> Particle:
+def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int, start_scan: np.float64=None) -> Particle:
     p = Particle()
 
     hf = h5.File(h5fn, 'r')
@@ -55,10 +56,20 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int) -> Particle
     p.densities = tdat["rho"][select_idx][:-1]
     p.mass = tdat["mass"][select_idx][:-1]
     p.position = tdat["xc"][select_idx][:-1]
+    p.velocity = tdat["vc"][select_idx][:-1]
     p.composition = comp
+    p.volume = p.mass / p.densities
 
-    p.volume = p.mass / p.densities[p.first_idx]
+    if start_scan is not None:
+        while p.temperatures[p.first_idx] > start_scan:
+            if p.first_idx > p.temperatures.size - 1:
+                raise ValueError(f"no temperature less than {start_scan} in data")
+            p.first_idx += 1
+
+
     return p
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -68,9 +79,25 @@ if __name__ == "__main__":
     parser.add_argument("pid", type=int, help="pid")
 
     args = parser.parse_args()
-    p = load_particle( args.inputfile, args.hydrofile, args.mid, args.pid)
+    #p = load_particle( args.inputfile, args.hydrofile, args.mid, args.pid)
+    #import matplotlib.pyplot as plt
 
-    import matplotlib.pyplot as plt
+    #plt.loglog(p.times, p.densities)
+    #plt.show()
+    # hf = h5.File(args.inputfile, 'r')
 
-    plt.loglog(p.times, p.densities)
-    plt.show()
+    # mdl = list(hf.keys())[2]
+    # hfp = hf[mdl]
+
+    # comp = dict()
+    # max_c = -1
+    # max_n = 0
+    # for n in range(1500):
+    #     for i, z in enumerate(hfp["initial_z"]):
+    #         if z == 6:
+    #             if hfp["initial_nd"][n, i] > max_c:
+    #                 max_c = hfp["initial_nd"][n, i]
+    #                 max_n = n
+    #                 break
+
+    # print(f"max c = {max_c} @ p={max_n}")

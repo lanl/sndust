@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import periodictable as pt
 
-from simulation_constants import N_MOMENTS, MAX_REACTANTS, MAX_PRODUCTS, fourpiover3
+from simulation_constants import N_MOMENTS, MAX_REACTANTS, MAX_PRODUCTS, fourpiover3, numBins, NDust
 from physical_constants import amu2g, ang2cm
 
 Composition = Dict[str, int]
@@ -105,7 +105,7 @@ class Network:
                     #    _idx += 1
                         self._NG += 1
                         self._species_gas.append(species)
-
+        NDust = self._ND
         for i in range(self._NG):
             self._species[self._species_gas[i]] = i
 
@@ -127,7 +127,7 @@ class Network:
 
     @property
     def solution_size(self) -> np.int32:
-        return self._NG + N_MOMENTS * self._ND
+        return self._NG + N_MOMENTS * self._ND + self._ND * numBins # trying to get bins
 
     @property
     def NG(self):
@@ -179,7 +179,7 @@ class Network:
                 for i in range(sub_npt["nkeysp"]):
                     sub_npt["keysp_idx"][i] = self._species[_ks[i]]
 
-                sub_npt["A"] = _par["A"]
+                sub_npt["A"] = _par["A"] * 1.0E4
                 sub_npt["B"] = _par["B"]
                 sub_npt["sigma"] = _par["sigma"]
                 sub_npt["a0"] = _par["a0"] * ang2cm

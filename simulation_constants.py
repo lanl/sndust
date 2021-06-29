@@ -7,6 +7,7 @@ twopi = 2. * np.pi
 fourpi = 2. * twopi
 fourpiover3 = fourpi / 3.
 fourover27 = 4. / 27.
+onehalf = 1. / 2.
 
 div6 = 1./6.
 div12 = 1./12.
@@ -22,4 +23,11 @@ hydro_testing_file = "/home/mauneyc/scratch/students/dust/utils/binary_chk/mdl2.
 comp_testing_file = "/home/mauneyc/scratch/students/dust/utils/composition_PM1.50E+01_XE1.69E+00_ID002.dat"
 dust_testing_file = "temporary_dust_data.dat"
 
+dTime = 0 # global timestep
 
+numBins = 5 # number of size bins
+bin_low = 0 # 10^x in angstroms
+bin_high = 5 # 10^x in angstroms
+edges = np.logspace(bin_low, bin_high, numBins + 1) # the 1st bin is _edges[1-1] to _edges[1], the last is _edges[numBins-1] to _edges[numBins] 
+
+NDust = 0

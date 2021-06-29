@@ -25,10 +25,10 @@ The python packages necessary to build are:
 
 The provided `environment.yml` file defines an environment that installs these packages using `conda`
 
+
 ```
 $> conda env create -f environment.yml
 ```
-
 ### Running
 `sndust` can run in either serial or parallel. The runtime configuration must be provided, see `runtime_settings.json` for an example setup
 
@@ -41,4 +41,5 @@ For parallel, invoke using `mpi4py.futures`
 ```
 $> mpiexec -n 4 python -m mpi4py.futures main.py -N 4 -c runtime_settings.json
 ```
+
 

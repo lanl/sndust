@@ -15,7 +15,9 @@ class SolverSpec(NamedTuple):
     max_timestep: np.float64
     absolute_tol: np.float64
     relative_tol: np.float64
+    #integrator: integrate.OdeSolver = integrate.DOP853
     integrator: integrate.OdeSolver = integrate.LSODA
+#    integrator: integrate.OdeSolver = integrate.Radau
 
 class Solver(object):
     def __init__(self, spec: SolverSpec, stepper: Stepper):
@@ -28,11 +30,14 @@ class Solver(object):
 
     def __call__(self, obs: Observer):
         msg = None
+        # loop until the ode object halts
         while self._ode.status == "running":
+            # if the stepper has no remaining work, leave loop
             if self._stepper.emit_done():
                 msg = "complete (stepper reports no longer changing)"
                 break
 
+            # reset timer and take timestep
             _xtime0 = default_timer()
             msg = self._ode.step()
 
