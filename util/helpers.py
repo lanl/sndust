@@ -12,13 +12,3 @@ def nested_dict_iter(nested):
         else:
             yield key, value
 
-def time_fn(func):
-    @wraps(func)
-    def _time_it(*args, **kwargs) -> float64:
-        start_time = time()
-        try:
-            return func(*args, **kwargs)
-        finally:
-            elapsed_time = time() - start_time
-            return elapsed_time
-    return _time_it

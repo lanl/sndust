@@ -58,6 +58,7 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int, start_scan:
     p.position = tdat["xc"][select_idx][:-1]
     p.velocity = tdat["vc"][select_idx][:-1]
     p.composition = comp
+    p.volume = p.mass / p.densities
 
     if start_scan is not None:
         while p.temperatures[p.first_idx] > start_scan:
@@ -65,9 +66,10 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int, start_scan:
                 raise ValueError(f"no temperature less than {start_scan} in data")
             p.first_idx += 1
 
-    p.volume = p.mass / p.densities[p.first_idx]
 
     return p
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -77,8 +79,25 @@ if __name__ == "__main__":
     parser.add_argument("pid", type=int, help="pid")
 
     args = parser.parse_args()
-    p = load_particle( args.inputfile, args.hydrofile, args.mid, args.pid)
-    import matplotlib.pyplot as plt
+    #p = load_particle( args.inputfile, args.hydrofile, args.mid, args.pid)
+    #import matplotlib.pyplot as plt
 
-    plt.loglog(p.times, p.densities)
-    plt.show()
+    #plt.loglog(p.times, p.densities)
+    #plt.show()
+    # hf = h5.File(args.inputfile, 'r')
+
+    # mdl = list(hf.keys())[2]
+    # hfp = hf[mdl]
+
+    # comp = dict()
+    # max_c = -1
+    # max_n = 0
+    # for n in range(1500):
+    #     for i, z in enumerate(hfp["initial_z"]):
+    #         if z == 6:
+    #             if hfp["initial_nd"][n, i] > max_c:
+    #                 max_c = hfp["initial_nd"][n, i]
+    #                 max_n = n
+    #                 break
+
+    # print(f"max c = {max_c} @ p={max_n}")

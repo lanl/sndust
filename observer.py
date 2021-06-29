@@ -28,7 +28,7 @@ class Observer(object):
                 (rt_settings["screen_all_every"], "screen_all"),
                 (rt_settings["store_hdf5_every"], "store_hdf5"),
                 (rt_settings["write_hdf5_every"], "write_hdf5")
-                ], 
+                ],
             dtype=([("value", "i8"), ("trigger", "U32")])
         )
         self._gas = gas
@@ -36,7 +36,7 @@ class Observer(object):
         self._step = step
         self._solv = solv
         self._ode = self._solv._ode
-        
+
         self._obsfname = f"{obs_file}.hdf5"
         self._histfname = f"{obs_file}.hist"
 
@@ -121,7 +121,7 @@ class Observer(object):
         blob += OBS_LINESEP1
         blob += f"{sysstat}\n"
         return blob
-    
+
     def _solution_all(self, frame):
         blob = "==--gas--==\n"
         for species in self._net._species_gas:
@@ -132,7 +132,7 @@ class Observer(object):
                 _ckey = f"calc_{species}"
                 _mkey = f"M_{species}"
                 _moms = ", ".join([ f"M_{i}[{m: >6.5E}]" for i, m in enumerate(frame[_mkey]) ])
-                blob += f"{species}: S[ {frame[_ckey]['S']: >6.5E} ] J[ {frame[_ckey]['Js']: >6.5E} ]\n"
+                blob += f"{species}: lnS[ {frame[_ckey]['lnS']: >6.5E} ] J[ {frame[_ckey]['Js']: >6.5E} ]\n"
                 blob += f"++++ moments ++++ {_moms}\n"
                 _skey = f"sizeBin_{species}" # trying to add size bins to int
                 _sizes = ", ".join([ f"sizeBin_{i}[{m: >6.5E}]" for i, m in enumerate(frame[_skey]) ]) # trying to add size bins to int
@@ -141,6 +141,7 @@ class Observer(object):
 
     def _solution_short(self, frame):
         blob = f"temperature = {frame['temperature']} K, density = {frame['density']} g/cm3\n"
+        blob += f"[C] = {frame['N_C']:6.5E}\n"
         return blob
 
     def _short_header(self, frame):
@@ -154,7 +155,7 @@ class Observer(object):
 
         actions = self._triggers["trigger"][np.where( step % self._triggers["value"] == 0 )[0]]
         if actions.size > 0:
-            
+
             frame = self._get_frame(step)
 
             for action in actions:

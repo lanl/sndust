@@ -30,11 +30,14 @@ class Solver(object):
 
     def __call__(self, obs: Observer):
         msg = None
+        # loop until the ode object halts
         while self._ode.status == "running":
+            # if the stepper has no remaining work, leave loop
             if self._stepper.emit_done():
                 msg = "complete (stepper reports no longer changing)"
                 break
 
+            # reset timer and take timestep
             _xtime0 = default_timer()
             msg = self._ode.step()
 

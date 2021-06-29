@@ -1,0 +1,59 @@
+[
+  {
+    "parameters": {
+      "A": 8.64726,
+      "B": 19.0422,
+      "a0": 1.281,
+      "key_species": [
+        "C"
+      ],
+      "sigma": 1400.0
+    },
+    "products": [
+      [
+        1.0,
+        "C(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "C"
+      ]
+    ],
+    "type": "nucleation"
+  },
+  {
+    "parameters": {
+      "A": 25.0129,
+      "B": 72.0015,
+      "a0": 2.319,
+      "key_species": [
+        "Mg",
+        "Si"
+      ],
+      "sigma": 400.0
+    },
+    "products": [
+      [
+        1.0,
+        "MgSiO3(s)"
+      ]
+    ],
+    "reactants": [
+      [
+        1.0,
+        "Mg"
+      ],
+      [
+        1.0,
+        "Si"
+      ],
+      [
+        3.0,
+        "O"
+      ]
+    ],
+    "type": "nucleation"
+  }
+]

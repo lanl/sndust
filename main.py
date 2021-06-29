@@ -22,7 +22,7 @@ def duster(settings, model_id, zone_id):
     print(f"M{model_id} (Z{zone_id}) loading input...(slow for now)")
     p = load_particle(settings["particle_inputfile"], \
                       settings["hydrorun_inputfile"], \
-                      model_id, zone_id, start_scan=3000.0)
+                      model_id, zone_id)
 
     output_d = f"output_M{model_id:03d}"
     os.makedirs(output_d, exist_ok=True)
@@ -38,7 +38,7 @@ def duster(settings, model_id, zone_id):
                      relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
 
     print(f"time_start = {p.times[p.first_idx]}")
-    
+
     solv    = Solver(spec, step)
     obs     = Observer(output_f, net, gas, step, solv, settings)
 
@@ -55,11 +55,6 @@ def duster(settings, model_id, zone_id):
         ## TIMING
         from stepper import S_DEBUG, S_FASTMATH, S_NOPYTHON, S_PARALLEL
         print(f"DEBUG={S_DEBUG}, NOPYTHON={S_NOPYTHON}, FASTMATH={S_FASTMATH}, PARALLEL={S_PARALLEL}")
-        for k, v in step._call_timers.items():
-            _ncall = len(v) - 1
-            _ntottime = sum(v[1:])
-            _avgcalltime = (_ntottime / _ncall) * 1.0E6
-            print(f"{k:>16} = {_avgcalltime} us ({_ncall} calls)")
     return msg
 
 
@@ -74,7 +69,7 @@ if __name__ == "__main__":
     with open(args.configfile, "r") as jfs:
         settings = json.load(jfs)
 
-    model_id = 2
+    model_id = 2 # note, zone ids from 0 ... 1545
     zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbers
     if 0:
         # TODO: better schedualing
@@ -82,7 +77,7 @@ if __name__ == "__main__":
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
                 print(result)
     else:
-        res_msg = duster(settings, model_id, 22)
+        res_msg = duster(settings, model_id, 200)
         print(res_msg)
         # for iz in zone_ids:
         #     duster(settings, model_id, iz)
