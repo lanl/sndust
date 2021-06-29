@@ -15,12 +15,12 @@ from simulation_constants import N_MOMENTS, MIN_CONCENTRATION, MAX_REACTANTS, tw
 # jit: Just In-Time. Code will be compiled at run-time.
 
 # controls if @jit compile in debug mode
-S_DEBUG    = False
+S_DEBUG    = True
 # if True, throw an error at startup if code wrapped in @jit cannot be converted from python
 # if False, code that cannot be converted is allowed to run in python
 S_NOPYTHON = True
 # compile @jit code with threading enabled
-S_PARALLEL = False
+S_PARALLEL = True
 # compile @jit code with relaxed precision requirements, allowing for more aggresive optimization
 S_FASTMATH = True
 
@@ -47,7 +47,7 @@ def dust_pre(calc_t, dust_t, y, cb):
         calc_t[i].cbar = cb[dust_t[i].keysp_idx[calc_t[i].ks_jdx]]
 
         for j in range(dust_t[i].nr):
-            calc_t[i].r_nu[i] = dust_t[i].react_nu[j] / dust_t[i].react_nu[calc_t[i].ks_jdx]
+            calc_t[i].r_nu[j] = dust_t[i].react_nu[j] / dust_t[i].react_nu[calc_t[i].ks_jdx]
 
         calc_t[i].S = 0.0
         calc_t[i].Js = 0.0

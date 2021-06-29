@@ -179,7 +179,7 @@ class Network:
                 for i in range(sub_npt["nkeysp"]):
                     sub_npt["keysp_idx"][i] = self._species[_ks[i]]
 
-                sub_npt["A"] = _par["A"]
+                sub_npt["A"] = _par["A"]*1.0E4
                 sub_npt["B"] = _par["B"]
                 sub_npt["sigma"] = _par["sigma"]
                 sub_npt["a0"] = _par["a0"] * ang2cm

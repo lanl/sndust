@@ -64,7 +64,7 @@ if __name__ == "__main__":
         settings = json.load(jfs)
 
     model_id = 2
-    zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbers
+    zone_ids = np.array([1000,1200])#np.arange(0, 100) # TODO: use particle data to get all zone numbers
     if 0:
         # TODO: better schedualing
         with MPIPoolExecutor(max_workers=args.ncpu) as pool:
