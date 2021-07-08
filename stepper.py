@@ -165,7 +165,7 @@ def erode_grow(dadt, y, dydt, NG, dust_calc):
         if dydt[NG + (i*N_MOMENTS +1)] != 0.0:
             new_grn_sz = dust_calc[i].ncrit**(onethird) #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
             idx = np.where(edges > new_grn_sz)[0] -1
-            dydt[NG + (NDust*N_MOMENTS) + (i*20 + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i].cbar
+            dydt[NG + (NDust*N_MOMENTS) + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i].cbar
         #new_size = dadt[i] + edges[i]
         for sizeIDX in list(range(numBins)):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
