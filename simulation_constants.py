@@ -29,5 +29,3 @@ numBins = 5 # number of size bins
 bin_low = 0 # 10^x in angstroms
 bin_high = 5 # 10^x in angstroms
 edges = np.logspace(bin_low, bin_high, numBins + 1) # the 1st bin is _edges[1-1] to _edges[1], the last is _edges[numBins-1] to _edges[numBins] 
-
-NDust = 0
