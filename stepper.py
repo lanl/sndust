@@ -158,18 +158,18 @@ def expand(xpand, y, dydt):
 #         dydt[i] = xpand * y[i]
 
 @jit((double[:], double[:], double[:], int32, numba_dust_calc[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
-def erode_grow(dadt, y, dydt, NG, dust_calc):
+def erode_grow(dadt, y, dydt, NG, NDust, dust_calc):
     start = NG + NDust * N_MOMENTS
     for i in prange(NDust):
         #check if new grain, calculate size, and add it to the correct bin
         if dydt[NG + (i*N_MOMENTS +1)] != 0.0:
-            new_grn_sz = dust_calc[i].ncrit**(onethird) #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
+            new_grn_sz = dust_calc[i][-1]**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
             idx = np.where(edges > new_grn_sz)[0] -1
-            dydt[NG + (NDust*N_MOMENTS) + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i].cbar
+            dydt[NG + (NDust*N_MOMENTS) + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1] ## 1 is cbar
         #new_size = dadt[i] + edges[i]
         for sizeIDX in list(range(numBins)):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
-            tot_change = dadt[i*numBins + sizeIDX]*dTime + dust_calc[i].dadt*dTime
+            tot_change = dadt[i*numBins + sizeIDX]*dTime + dust_calc[i][-2]*dTime ## -2 is dadt
             new_size = grn_size + tot_change
             if new_size > edges[i+1]:
                 dydt[NG + (NDust*N_MOMENTS) + (i*numBins +1)] += y[NG + (NDust*N_MOMENTS) + (i*numBins)]
@@ -246,7 +246,7 @@ class Stepper(object):
         dadt, d_conc = destroy(self._gas, self._net, vol, rho, y, T, v_gas)
         conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
         #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:], self._net.NG, self._dust_calc)
-        erode_grow(dadt, y, dydt, self._net.NG, self._dust_calc)
+        erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc)
 
 
         return dydt
