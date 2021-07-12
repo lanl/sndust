@@ -11,6 +11,8 @@
   "screen_short_every"    : 10000,
   "screen_all_every"      : 100000,
   "align_tend_value"  : 31556926,
-  "align_tend_resolution": 1
+  "align_tend_resolution": 1,
+  "restart"              : 0,
+  "res_zones"            : [541]
 }
 

@@ -12,6 +12,7 @@ from network import Network
 from stepper import Stepper
 from solver import SolverSpec, Solver
 from observer import Observer
+import h5py as h
 
 ONLY_MODEL_2 = True
 #np.seterr(invalid='raise')
@@ -88,7 +89,8 @@ if __name__ == "__main__":
         settings = json.load(jfs)
 
     model_id = 2 # note, zone ids from 0 ... 1545
-    zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbersrestart = settings["restart"]
+    zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbers
+    restart = settings["restart"]
     if restart:
         zone_ids = settings["res_zones"]
     
@@ -98,7 +100,7 @@ if __name__ == "__main__":
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
                 print(result)
     else:
-        res_msg = duster(settings, model_id, 200)
+        res_msg = duster(settings, model_id, 541)
         print(res_msg)
         # for iz in zone_ids:
         #     duster(settings, model_id, iz)

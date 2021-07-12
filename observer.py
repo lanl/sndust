@@ -132,7 +132,8 @@ class Observer(object):
                 _ckey = f"calc_{species}"
                 _mkey = f"M_{species}"
                 _moms = ", ".join([ f"M_{i}[{m: >6.5E}]" for i, m in enumerate(frame[_mkey]) ])
-                blob += f"{species}: lnS[ {frame[_ckey]['lnS']: >6.5E} ] J[ {frame[_ckey]['Js']: >6.5E} ]\n"
+                blob += f"{species}: lnS[ {frame[_ckey]['lnS']: >6.5E} ] J[ {frame[_ckey]['Js']: >6.5E} ] ncrit[ {frame[_ckey]['ncrit']: >6.5E} ] cbar[ {frame[_ckey]['cbar']: >6.5E} ]\n"
+                #blob += f"{species}: lnS[ {frame[_ckey]['lnS']: >6.5E} ] J[ {frame[_ckey]['Js']: >6.5E} ]\n"
                 blob += f"++++ moments ++++ {_moms}\n"
                 _skey = f"sizeBin_{species}" # trying to add size bins to int
                 _sizes = ", ".join([ f"sizeBin_{i}[{m: >6.5E}]" for i, m in enumerate(frame[_skey]) ]) # trying to add size bins to int
