@@ -33,9 +33,27 @@ def duster(settings, model_id, zone_id):
     print(f"M{model_id} (Z{zone_id}) loaded, beginnging run: output[{output_f}]")
 
     gas     = SNGas(p, net)
+
+    restart = settings["restart"]
+    t_start = p.times[p.first_idx]
+    t_end = p.times[p.last_idx]
+
+    if restart:
+        fName = './output_M'+str(model_id).zfill(3)+'/old'+str(zone_id).zfill(4)+'.hdf5'
+        resF = h.File(fName,'r')
+        keys = list(resF['root'].keys())
+        data = resF['root'][keys[-1]][-1]
+        t_start = data[1]
+        NG = net._NG+7
+        conc = list(data)[7:NG]
+        mom = list(data)[NG:NG+net._ND]
+        bins = list(data)[NG+net._ND*2:NG+net._ND*3]
+        gas._c0 = np.append(np.append(conc,mom),bins)
+        resF.close()
+
     step    = Stepper(gas, net)
-    spec    = SolverSpec(time_start = p.times[p.first_idx], time_bound = p.times[p.last_idx], absolute_tol = settings["abs_tol"], \
-                     relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
+    spec    = SolverSpec(time_start = t_start, time_bound = t_end, absolute_tol = settings["abs_tol"], \
+                         relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
 
     print(f"time_start = {p.times[p.first_idx]}")
 
@@ -70,7 +88,10 @@ if __name__ == "__main__":
         settings = json.load(jfs)
 
     model_id = 2 # note, zone ids from 0 ... 1545
-    zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbers
+    zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbersrestart = settings["restart"]
+    if restart:
+        zone_ids = settings["res_zones"]
+    
     if 0:
         # TODO: better schedualing
         with MPIPoolExecutor(max_workers=args.ncpu) as pool:
