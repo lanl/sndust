@@ -56,8 +56,6 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
     destruct_list = np.zeros(len(grain_list)*numBins)
     n_gas = net.NG
     for GRidx,grain in enumerate(grain_list):
-        if y[n_gas +(GRidx*N_MOMENTS) + (GRidx * numBins)] == 0: # we have no dust to destroy so we skip & save time
-            continue
         grain = str(grain.replace('(s)',''))
         if grain not in data:
             destruct_list[GRidx] = 0
@@ -72,7 +70,7 @@ def THERMAL_dadt(grain_list,T,n,abun,abun_name,g: SNGas,net: Network,volume, y):
             prod_coef = grainsCOMP[grain]["reacAMT"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
-                g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                g_c0_change[sidx] = yp.Y(x)*coef/(volume*np.sum(prod_coef))
                 #g._c0[sidx] = g._c0[sidx] + yp.Y(x * kB_eV * T)/(volume*np.sum(prod_coef))*coef
             dadt += pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
         dadt *= (v["md"] * amu2g) / (2. * v["rhod"]) * n # in cm/s
@@ -86,8 +84,7 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
     n_gas = len(net._species_gas)
     for sizeIDX in list(range(numBins)):
         for GRidx,grain in enumerate(grain_list):
-            if y[n_gas +(GRidx*N_MOMENTS) + (GRidx * numBins)] == 0: # we have no dust to destroy so we skip & save time
-                continue
+            grain = str(grain.replace('(s)',''))
             if grain not in data:
                 destruct_list[GRidx] = 0
                 continue
@@ -105,7 +102,7 @@ def non_THERMAL_dadt(grain_list,T,n,abun,abun_name,vd,g: SNGas,net: Network,volu
                 prod_coef = grainsCOMP[grain]["reacAMT"]
                 for cidx,coef in enumerate(prod_coef):
                     sidx = net.sidx(grnComps[cidx])
-                    g_c0_change = yp.Y(x)*coef/(volume*np.sum(prod_coef))
+                    g_c0_change[sidx] = yp.Y(x)*coef/(volume*np.sum(prod_coef))
                     #g._c0[sidx] = g._c0[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef))
                 dadt += pref * yp.Y(x)
             dadt *= (v["md"] * amu2g * velo) / (2. * v["rhod"]) * n # cm/s
