@@ -9,7 +9,7 @@ import json
 import h5py as h5
 import scipy.integrate as integrate
 
-from simulation_constants import N_MOMENTS,dTime,numBins
+from simulation_constants import N_MOMENTS,numBins
 from physical_constants import sec2day
 from network import Network
 from gas import SNGas
@@ -36,6 +36,8 @@ class Observer(object):
         self._step = step
         self._solv = solv
         self._ode = self._solv._ode
+
+        #self._step.dTime = self._ode.t - self._ode.t_old
 
         self._obsfname = f"{obs_file}.hdf5"
         self._histfname = f"{obs_file}.hist"
@@ -152,7 +154,7 @@ class Observer(object):
         return blob
 
     def __call__(self, step: np.int32, force_screen: bool = False):
-        dTime = self._ode.t - self._ode.t_old
+        self._step.dTime = self._ode.t - self._ode.t_old
 
         actions = self._triggers["trigger"][np.where( step % self._triggers["value"] == 0 )[0]]
         if actions.size > 0:
