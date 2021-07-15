@@ -13,7 +13,7 @@ from util.timer import Timer
 
 from destroy import *
 from particle import Particle, load_particle
-
+from printer import *
 #from print_msg import *
 
 # some definitions
@@ -157,25 +157,25 @@ def expand(xpand, y, dydt):
 #     for i in range(y.size):
 #         dydt[i] = xpand * y[i]
 
-@jit((double[:], double[:], double[:], int32, int32, numba_dust_calc[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
-def erode_grow(dadt, y, dydt, NG, NDust, dust_calc):
+#@jit((double[:], double[:], double[:], int32, int32, numba_dust_calc[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
+def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime):
     start = NG + NDust * N_MOMENTS
     for i in prange(NDust):
         #check if new grain, calculate size, and add it to the correct bin
         if dydt[NG + (i*N_MOMENTS +1)] != 0.0:
-            new_grn_sz = dust_calc[i].ncrit**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
-            idx = np.where(edges > new_grn_sz)[0] -1
-            dydt[NG + (NDust*N_MOMENTS) + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i].cbar ## 1 is cbar
-        #new_size = dadt[i] + edges[i]
+            new_grn_sz = dust_calc[i][-1]**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
+            idx = np.where(edges > new_grn_sz)[0][0] -1
+            dydt[start + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1] ## 1 is cbar
+            #prnt(dadt)
         for sizeIDX in list(range(numBins)):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
-            tot_change = dadt[i*numBins + sizeIDX]*dTime + dust_calc[i].dadt*dTime ## -2 is dadt
+            tot_change = dadt[i*numBins + sizeIDX]*dTime + dust_calc[i][-2]*dTime ## -2 is dadt
             new_size = grn_size + tot_change
             if new_size > edges[i+1]:
-                dydt[NG + (NDust*N_MOMENTS) + (i*numBins +1)] += y[NG + (NDust*N_MOMENTS) + (i*numBins)]
-                dydt[NG + (NDust*N_MOMENTS) + (i*numBins)] -= y[NG + (NDust*N_MOMENTS) + (i*numBins)]
+                dydt[start + (i*numBins +1)] += y[start + (i*numBins)]
+                dydt[start + (i*numBins)] -= y[start + (i*numBins)]
             else:
-                dydt[NG + (NDust*N_MOMENTS) + (i*numBins +1)] += y[NG + (NDust*N_MOMENTS) + (i*numBins)]
+                dydt[start + (i*numBins +1+sizeIDX)] += y[start + (i*numBins)+sizeIDX]
 
 @jit((double[:], double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def conc_update(d_conc, dydt, y):
@@ -205,10 +205,11 @@ def _f(calc_t, dust_t, y, cb, T, dT):
 
 #############################################################
 class Stepper(object):
-    def __init__(self, gas: SNGas, net: Network):
+    def __init__(self, gas: SNGas, net: Network, timeSTEP):
         self._gas = gas
         self._net = net
         self._dust_calc = np.empty(self._net.ND, dtype=dust_calc)
+        self.dTime = timeSTEP
 
         # TODO: hacking now to finish, come back and fix this garbage
         _tmp = self._net.generate_nparrays()
@@ -229,8 +230,7 @@ class Stepper(object):
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
 
-
-
+        
         rho = self._gas.Density(t)
         drho = self._gas.Density(t, derivative=1)
 
@@ -243,10 +243,11 @@ class Stepper(object):
 
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
 
-        dadt, d_conc = destroy(self._gas, self._net, vol, rho, y, T, v_gas)
+        dadt, d_conc = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime)
         conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
+        #prnt(t)
         #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:], self._net.NG, self._dust_calc)
-        erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc)
+        erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc, self.dTime)
 
 
         return dydt

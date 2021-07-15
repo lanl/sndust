@@ -52,7 +52,9 @@ def duster(settings, model_id, zone_id):
         gas._c0 = np.append(np.append(conc,mom),bins)
         resF.close()
 
-    step    = Stepper(gas, net)
+    timeSTEP = settings["max_dt"]
+
+    step    = Stepper(gas, net,timeSTEP)
     spec    = SolverSpec(time_start = t_start, time_bound = t_end, absolute_tol = settings["abs_tol"], \
                          relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
 
