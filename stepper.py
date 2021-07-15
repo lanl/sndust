@@ -171,6 +171,9 @@ def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
             tot_change = dadt[i*numBins + sizeIDX]*dTime + dust_calc[i][-2]*dTime ## -2 is dadt
             new_size = grn_size + tot_change
+            if new_size < 0.0:
+                dydt[start + (i*numBins)] = 0
+                continue
             if new_size > edges[i+1]:
                 dydt[start + (i*numBins +1)] += y[start + (i*numBins)]
                 dydt[start + (i*numBins)] -= y[start + (i*numBins)]
