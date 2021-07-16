@@ -55,7 +55,9 @@ def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volu
     g_c0_change = np.zeros(len(gas_name))
     destruct_list = np.zeros(len(grain_list)*numBins)
     for GRidx,grain in enumerate(grain_list):
-        if y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins:len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+numBins] == np.zeros(numBins):
+        sizeBins = y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins:len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+numBins]
+        num_grains_dest = np.count_nonzero(sizeBins)
+        if sizeBins == np.zeros(numBins):
             prnt('no grain to destroy, skip')
             continue
         grain = str(grain.replace('(s)',''))
@@ -79,7 +81,7 @@ def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volu
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
                 # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
-                g_c0_change[sidx] =  sput_yield*coef/(volume*np.sum(prod_coef)) # number of sputtered atoms
+                g_c0_change[sidx] =  sput_yield*coef/(volume*np.sum(prod_coef)) * num_grains_dest # number of sputtered atoms, multiplied by num_grn_dest to account for the number of this size bins effected
                 # adding the mass of the sputtered species to m_sp
                 m_sp = m_sp + coef*sput_yield/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
             # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitless
@@ -88,6 +90,9 @@ def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volu
         # now it is in 
         dadt = dadt * (-1) * m_sp / (2. * v["rhod"]) * n_tot # in cm/s, the last part is the coeff outside the sum and is unitless
         destruct_list[GRidx*numBins:GRidx*numBins+numBins] = dadt
+        empty = np.where(sizeBins == 0)
+        for i in empty:
+            destruct_list[GRidx*numBins + i] = 0
     return destruct_list, g_c0_change
 
 #will need to pass in an array or dictionary or all the abundances
