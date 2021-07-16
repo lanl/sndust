@@ -44,8 +44,8 @@ def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime):
 # here, we take the gas velocity and calculate s_i to determine if we have thermal or non thermal sputtering. the cutoff is assigned to s_i = 10
 def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime):
     # here v_gas is already in cgs, I converted it to make the input data which is in cgs units
-    si = np.sqrt( (v_gas ** 2) / (2 * kB_erg * T))
-    if si > 10:
+    si = 0 # np.sqrt( (v_gas ** 2) / (2 * kB_erg * T))
+    if si > 1:
         return non_THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume, y,dTime)
     else:
         return THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g,net,volume,y)
@@ -57,8 +57,8 @@ def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volu
     for GRidx,grain in enumerate(grain_list):
         sizeBins = y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins:len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+numBins]
         num_grains_dest = np.count_nonzero(sizeBins)
-        if sizeBins == np.zeros(numBins):
-            prnt('no grain to destroy, skip')
+        if all(amt == 0 for amt in sizeBins):
+            #prnt('no grain to destroy, skip')
             continue
         grain = str(grain.replace('(s)',''))
         if grain not in data:
@@ -75,16 +75,16 @@ def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volu
             pref = A_i * np.sqrt( 8.0 * kB_erg * T / (np.pi * m_i)) # units in cm/s
             yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
             integral = quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
-            sput_yield = quad(lambda x: yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
+            #sput_yield = quad(lambda x: yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
             grnComps = grainsCOMP[grain]["reactants"] 
             prod_coef = grainsCOMP[grain]["reactants_amount"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
                 # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
                 # number of sputtered atoms, multiplied by num_grn_dest to account for the number of this size bins effected
-                g_c0_change[sidx] =  sput_yield*coef/(volume*np.sum(prod_coef)) * num_grains_dest 
+                g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) * num_grains_dest 
                 # adding the mass of the sputtered species to m_sp
-                m_sp = m_sp + coef*sput_yield/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
+                m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
             # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitless
             # dadt is in cm/s
             dadt = dadt + pref * integral

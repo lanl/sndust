@@ -166,19 +166,18 @@ def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime):
             new_grn_sz = dust_calc[i][-1]**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
             idx = np.where(edges > new_grn_sz)[0][0] -1
             dydt[start + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1] ## 1 is cbar
-            #prnt(dadt)
-        for sizeIDX in list(range(numBins)):
+            #prnt('new grain '+str(dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1]))
+        for sizeIDX in list(range(numBins-1)):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
-            tot_change = dadt[i*numBins + sizeIDX]*dTime + dust_calc[i][-2]*dTime ## -2 is dadt
-            new_size = grn_size + tot_change
-            if new_size < 0.0:
-                dydt[start + (i*numBins)] = 0
-                continue
+            shrink = dadt[i*numBins + sizeIDX]*dTime
+            grow = dust_calc[i][-2]*dTime ## -2 is dadt
+            new_size = grn_size + shrink + grow
+            #prnt('shrink '+str(shrink)+', grow '+str(grow)+', grain size '+str(grn_size))
             if new_size > edges[i+1]:
-                dydt[start + (i*numBins +1)] += y[start + (i*numBins)]
-                dydt[start + (i*numBins)] -= y[start + (i*numBins)]
-            else:
-                dydt[start + (i*numBins +1+sizeIDX)] += y[start + (i*numBins)+sizeIDX]
+                dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
+                dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
+            #else:
+            #    dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
 
 @jit((double[:], double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def conc_update(d_conc, dydt, y):
@@ -228,7 +227,6 @@ class Stepper(object):
 
     def __call__(self, t: np.float64, y: np.array) -> np.array:
         # get interpolant data
-
         v_gas = double(self._gas.Velocity(t))
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
@@ -248,8 +246,6 @@ class Stepper(object):
 
         dadt, d_conc = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime)
         conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
-        #prnt(t)
-        #erode(dadt, y[self._net.NG+self._net.ND*N_MOMENTS:], dydt[self._net.NG+self._net.ND*N_MOMENTS:], self._net.NG, self._dust_calc)
         erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc, self.dTime)
 
 
