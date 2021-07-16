@@ -44,7 +44,7 @@ def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime):
 # here, we take the gas velocity and calculate s_i to determine if we have thermal or non thermal sputtering. the cutoff is assigned to s_i = 10
 def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime):
     # here v_gas is already in cgs, I converted it to make the input data which is in cgs units
-    si = np.sqrt( (v_gas ** 2) / (2 * kB_erg * T))
+    si = 0 #np.sqrt( (v_gas ** 2) / (2 * kB_erg * T))
     if si > 10:
         return non_THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume, y,dTime)
     else:
@@ -71,17 +71,19 @@ def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volu
             # pref is in cgs --  cm/s
             pref = A_i * np.sqrt( 8.0 * kB_erg * T / (np.pi * m_i)) # units in cm/s
             yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
+            integral = quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
+            sput_yield = quad(lambda x: yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
             grnComps = grainsCOMP[grain]["reactants"] 
             prod_coef = grainsCOMP[grain]["reactants_amount"]
             for cidx,coef in enumerate(prod_coef):
                 sidx = net.sidx(grnComps[cidx])
                 # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
-                g_c0_change[sidx] = yp.Y(x)*coef/(volume*np.sum(prod_coef)) # number of sputtered atoms
+                g_c0_change[sidx] =  sput_yield*coef/(volume*np.sum(prod_coef)) # number of sputtered atoms
                 # adding the mass of the sputtered species to m_sp
-                m_sp = m_sp + coef*yp.Y(x)/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
+                m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g #coef*yp.Y(x)/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
             # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitless
             # dadt is in cm/s
-            dadt = dadt + pref * quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
+            dadt = dadt + pref * integral
         # now it is in 
         dadt = dadt * (-1) * m_sp / (2. * v["rhod"]) * n_tot # in cm/s, the last part is the coeff outside the sum and is unitless
         destruct_list[GRidx*numBins:GRidx*numBins+numBins] = dadt
