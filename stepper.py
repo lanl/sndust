@@ -173,11 +173,15 @@ def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime):
             grow = dust_calc[i][-2]*dTime ## -2 is dadt
             new_size = grn_size + shrink + grow
             #prnt('shrink '+str(shrink)+', grow '+str(grow)+', grain size '+str(grn_size))
-            if new_size > edges[i+1]:
+            if new_size > edges[sizeIDX+1]:
                 dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
                 dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
-            #else:
-            #    dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
+            elif new_size < edges[sizeIDX]:
+                if sizeIDX == 0:
+                    continue
+                else:
+                    dydt[start + (i*numBins) + sizeIDX - 1] += y[start + (i*numBins) + sizeIDX]
+                    dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
 
 @jit((double[:], double[:], double[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
 def conc_update(d_conc, dydt, y):
