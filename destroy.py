@@ -31,21 +31,22 @@ amu2g = 1. / g2amu
 JtoEV = 6.242e+18
 
 # here we're establishing the abundance (gas concentrations) and their names in vector form and thenstarting the sputtering/destruct. calculations
-def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime):
+def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime,S):
     gas_name = list(net._species_gas) # name of species
     gas_conc = np.zeros(len(gas_name)) # concentration, units # of particles/cm^3
     for idx,val in enumerate(gas_name): # going and updating the empty list with the gas concentrations 
         gas_conc[idx] = g._c0[idx]
     n_tot = sum([gas_conc[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(gas_name)]) # total number density of the gas
     grain_names = net._species_dust
-    dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume,y,dTime)
+    dest, g_change = calc_TOTAL_dadt(grain_names,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume,y,dTime,S)
     return dest, g_change # dest is in cm
 
 # here, we take the gas velocity and calculate s_i to determine if we have thermal or non thermal sputtering. the cutoff is assigned to s_i = 10
-def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime):
+def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime,S):
     # here v_gas is already in cgs, I converted it to make the input data which is in cgs units
-    si = 0 # np.sqrt( (v_gas ** 2) / (2 * kB_erg * T))
-    if si > 1:
+    #si = 0 # np.sqrt( (v_gas ** 2) / (2 * kB_erg * T))
+    #if si > 1:
+    if S == 1:
         return non_THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume, y,dTime)
     else:
         return THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g,net,volume,y)

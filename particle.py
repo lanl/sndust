@@ -10,7 +10,6 @@ from typing import List, Dict, Tuple, NamedTuple
 import numpy as np
 import h5py as h5
 import periodictable as pt
-
 from physical_constants import eV2K, amu2g
 
 @dataclass
@@ -25,6 +24,7 @@ class Particle:
     mass: np.array = None
     volume: np.array = None
     velocity: np.array = None
+    shock: np.array = None
 
     first_idx: int = 0
     last_idx: int = -1
@@ -57,6 +57,8 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int, start_scan:
     p.mass = tdat["mass"][select_idx][:-1]
     p.position = tdat["xc"][select_idx][:-1]
     p.velocity = tdat["vc"][select_idx][:-1]
+    p.shock = tdat["shock"][select_idx][:-1]    
+
     p.composition = comp
     p.volume = p.mass / p.densities
 

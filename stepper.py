@@ -235,6 +235,7 @@ class Stepper(object):
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
 
+        S = double(self._gas.Shock(t))
         
         rho = self._gas.Density(t)
         drho = self._gas.Density(t, derivative=1)
@@ -248,7 +249,7 @@ class Stepper(object):
 
         expand(xpnd, y[0:self._net.NG], dydt[0:self._net.NG])
 
-        dadt, d_conc = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime)
+        dadt, d_conc = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime,S)
         conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
         erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc, self.dTime)
 
