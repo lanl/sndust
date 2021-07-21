@@ -77,28 +77,29 @@ def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y
     v = data[grain]
     dadt = 0
     m_sp = 0
+    idx = net.sidx('C')
+    val = gas_con[idx]
     # here this is the argument in the summation
-    for idx,val in enumerate(gas_conc):
-        i_gas_name = list(gas_name)[idx]
-        A_i = val / n_tot # #/cm^3 * cm^3 = # of particles -- unitless
-        m_i = ions[i_gas_name]["mi"] * amu2g # mass of gas species-not sure if it should be mulitplied by the abundance, in grams
-        # pref is in cgs --  cm/s
-        pref = A_i * np.sqrt( 8.0 * kB_erg * T / (np.pi * m_i)) # units in cm/s
-        yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
-        integral = quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
-        #sput_yield = quad(lambda x: yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
-        grnComps = grainsCOMP[grain]["reactants"]
-        prod_coef = grainsCOMP[grain]["reactants_amount"]
-        for cidx,coef in enumerate(prod_coef):
-            sidx = net.sidx(grnComps[cidx])
-            # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
-            # number of sputtered atoms, multiplied by num_grn_dest to account for the number of this size bins effected
-            g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) # num_grains_dest
-            # adding the mass of the sputtered species to m_sp
-            m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
-        # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitless
-        # dadt is in cm/s
-        dadt = dadt + pref * integral
+    i_gas_name = list(gas_name)[idx]
+    A_i = val / n_tot # #/cm^3 * cm^3 = # of particles -- unitless
+    m_i = ions[i_gas_name]["mi"] * amu2g # mass of gas species-not sure if it should be mulitplied by the abundance, in grams
+    # pref is in cgs --  cm/s
+    pref = A_i * np.sqrt( 8.0 * kB_erg * T / (np.pi * m_i)) # units in cm/s
+    yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
+    integral = quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
+    #sput_yield = quad(lambda x: yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
+    grnComps = grainsCOMP[grain]["reactants"]
+    prod_coef = grainsCOMP[grain]["reactants_amount"]
+    for cidx,coef in enumerate(prod_coef):
+        sidx = net.sidx(grnComps[cidx])
+        # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
+        # number of sputtered atoms, multiplied by num_grn_dest to account for the number of this size bins effected
+        g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) # num_grains_dest
+        # adding the mass of the sputtered species to m_sp
+        m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
+    # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitle
+    # dadt is in cm/s
+    dadt = dadt + pref * integral
     # now it is in
     dadt = dadt * (-1) * m_sp / (2. * v["rhod"]) * n_tot # in cm/s, the last part is the coeff outside the sum and is unitless
     return dadt, g_c0_change
@@ -112,18 +113,19 @@ def non_THERMAL_dadt(GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGa
     grain = str(grain.replace('(s)',''))
     dadt = 0
     m_sp = 0
-    for idx,val in enumerate(gas_conc):
-        i_gas_name = list(gas_name)[idx]
-        A_i = val / n_tot # units of # of particles
-        x = 1./2. * ions[i_gas_name]["mi"] * amu2g / 1000 * np.power(v_d /1000,2) * JtoEV # divide by 1000 to get mass,velocity to mks
-        yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
-        grnComps = grainsCOMP[grain]["reactants"]
-        prod_coef = grainsCOMP[grain]["reactants_amount"]
-        for cidx,coef in enumerate(prod_coef):
-            sidx = net.sidx(grnComps[cidx])
-            g_c0_change[sidx] = g_c0_change[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef)) # units of # of atoms
-            m_sp = m_sp + coef*yp.Y(x)/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # grams
-            dadt = dadt + A_i * yp.Y(x) # units of # of atoms -- unitless
+    idx = net.sidx('C')
+    val = gas_con[idx]
+    i_gas_name = list(gas_name)[idx]
+    A_i = val / n_tot # units of # of particles
+    x = 1./2. * ions[i_gas_name]["mi"] * amu2g / 1000 * np.power(v_d /1000,2) * JtoEV # divide by 1000 to get mass,velocity to mks
+    yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
+    grnComps = grainsCOMP[grain]["reactants"]
+    prod_coef = grainsCOMP[grain]["reactants_amount"]
+    for cidx,coef in enumerate(prod_coef):
+        sidx = net.sidx(grnComps[cidx])
+        g_c0_change[sidx] = g_c0_change[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef)) # units of # of atoms
+        m_sp = m_sp + coef*yp.Y(x)/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # grams
+    dadt = dadt + A_i * yp.Y(x) # units of # of atoms -- unitless
     dadt = dadt * (m_sp * v_d) / (2. * v["rhod"]) * n_gas # cm/s
     return dadt, g_c0_change
 
