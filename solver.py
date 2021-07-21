@@ -56,7 +56,8 @@ class Solver(object):
                 gas_conc = self._stepper._gas._c0[:self._stepper._net.NG]
                 n_tot = sum([gas_conc[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(gas_name)])
                 press = n_tot * kB_erg * T
-                v_shock = np.sqrt(press/rho)
+                # assume diatomic molecules for gas gamma = 7/5
+                v_shock = np.sqrt(7.0/5.0 *press/rho)
                 self._ode.y[self._stepper._net._NG + self._stepper._net._ND * N_MOMENTS + self._stepper._net._ND * numBins: -1] = 3.0/4.0 * v_shock
 
             self._tot_steptime += (default_timer() - _xtime0)

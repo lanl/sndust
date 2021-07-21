@@ -68,6 +68,7 @@ def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Net
 
             destruct_list[GRidx*numBins + sizeIDX] = dest
             g_c0_change += del_g
+            cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf  # units of cm
             dydt[net._NG + net.ND * numBins + GRidx * numBins + sizeIDX] = calc_dvdt(n_tot,T, v["rhod"], gas_conc, gas_name, v_d[GRidx*numBins+sizeIDX], cross_sec, g, net, volume) * dTime # cm/s
     return destruct_list, g_c0_change, dydt
 
@@ -92,7 +93,7 @@ def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y
             sidx = net.sidx(grnComps[cidx])
             # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
             # number of sputtered atoms, multiplied by num_grn_dest to account for the number of this size bins effected
-            g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) * num_grains_dest
+            g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) # num_grains_dest
             # adding the mass of the sputtered species to m_sp
             m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
         # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitless
