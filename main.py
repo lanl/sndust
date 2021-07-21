@@ -102,7 +102,7 @@ if __name__ == "__main__":
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
                 print(result)
     else:
-        res_msg = duster(settings, model_id, 541)
+        res_msg = duster(settings, model_id, 1541)
         print(res_msg)
         # for iz in zone_ids:
         #     duster(settings, model_id, iz)

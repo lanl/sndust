@@ -1,13 +1,16 @@
 import logging, weakref
 from typing import NamedTuple
 from timeit import default_timer
-
+from atomic_mass import AMU
 import numpy as np
 import scipy.integrate as integrate
 
 import simulation_constants as sim_const
+from simulation_constants import *
 from stepper import Stepper
 from observer import Observer
+
+kB_erg = 1.380649E-16
 
 class SolverSpec(NamedTuple):
     time_start: np.float64
@@ -27,6 +30,7 @@ class Solver(object):
         self._avg_steptime = 0.0
         self._tot_steptime = 0.0
         self._stepper = stepper
+        self._shock = 0.0
 
     def __call__(self, obs: Observer):
         msg = None
@@ -40,6 +44,20 @@ class Solver(object):
             # reset timer and take timestep
             _xtime0 = default_timer()
             msg = self._ode.step()
+
+            # check for shock
+            self.shock = self._stepper._gas._fS(self._ode.t)
+
+            if self.shock >= 0.5:
+                t = self._ode.t
+                rho = self._stepper._gas.Density(t)
+                T = self._stepper._gas.Temperature(t)
+                gas_name = list(self._stepper._net._species_gas)
+                gas_conc = self._stepper._gas._c0[:self._stepper._net.NG]
+                n_tot = sum([gas_conc[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(gas_name)])
+                press = n_tot * kB_erg * T
+                v_shock = np.sqrt(press/rho)
+                self._ode.y[self._stepper._net._NG + self._stepper._net._ND * N_MOMENTS + self._stepper._net._ND * numBins: -1] = 3.0/4.0 * v_shock
 
             self._tot_steptime += (default_timer() - _xtime0)
             self._avg_steptime = (self._tot_steptime / float(self._steps+1))
