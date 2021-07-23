@@ -43,14 +43,14 @@ def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime, dydt):
 
 # here, we take the gas velocity and calculate s_i to determine if we have thermal or non thermal sputtering. the cutoff is assigned to s_i = 10
 def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime, dydt):
-    v_d = y[net._NG + net._ND * N_MOMENTS + net._ND * numBins: -1]
+    v_d = y[net._NG + net._ND * N_MOMENTS + net._ND * numBins: net._NG + net._ND * N_MOMENTS + net._ND * numBins +numBins * net._ND]
     destruct_list = np.zeros(len(grain_list)*numBins)
     g_c0_change = np.zeros(len(gas_name))
 
     for sizeIDX in list(range(numBins)):
         for GRidx,grain in enumerate(grain_list):
             #if we have no grains, skip
-            if y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+sizeIDX] == 0:
+            if y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+sizeIDX] <= 0:
                 continue
             #if we don't have data for the grain, skip
             grain = str(grain.replace('(s)',''))
@@ -58,12 +58,15 @@ def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Net
                 continue
             v = data[grain]
             m_i = ions['C']["mi"] * amu2g
-            si = np.sqrt( (v_d[GRidx * numBins + sizeIDX] ** 2) / (2 * kB_erg * T))
+            si = np.sqrt(m_i * (v_d[sizeIDX] ** 2) / (2 * kB_erg * T))
             if si > 1:
-                dest, del_g = non_thermal_dadt(sizeIDX, grain, T, n_tot, gas_conc, gas_name, g, net, volume, y)
+                # (GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGas,net: Network,volume, y,dTime)
+                dest, del_g = non_THERMAL_dadt(GRidx, grain, sizeIDX, T, n_tot, gas_conc, gas_name, v_d[sizeIDX], g, net, volume, y,dTime)
+                prnt(dest)
                 #non_THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume, y,dTime)
             else:
                 dest, del_g = THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g,net,volume,y)
+                #prnt(dest)
                 #THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g,net,volume,y)
 
             destruct_list[GRidx*numBins + sizeIDX] = dest
@@ -78,7 +81,7 @@ def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y
     dadt = 0
     m_sp = 0
     idx = net.sidx('C')
-    val = gas_con[idx]
+    val = gas_conc[idx]
     # here this is the argument in the summation
     i_gas_name = list(gas_name)[idx]
     A_i = val / n_tot # #/cm^3 * cm^3 = # of particles -- unitless
@@ -109,14 +112,13 @@ def non_THERMAL_dadt(GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGa
     v = data[grain]
     cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf  # units of cm
     #v_d = calc_dvdt(n_gas,T, v["rhod"], gas_conc, gas_name, v_gas, cross_sec, g, net, volume) * dTime # units of cm/s
-    v_d = v_d[GRidx *numBins + sizeIDX]
     grain = str(grain.replace('(s)',''))
     dadt = 0
     m_sp = 0
     idx = net.sidx('C')
-    val = gas_con[idx]
+    val = gas_conc[idx]
     i_gas_name = list(gas_name)[idx]
-    A_i = val / n_tot # units of # of particles
+    A_i = val / n_gas # units of # of particles
     x = 1./2. * ions[i_gas_name]["mi"] * amu2g / 1000 * np.power(v_d /1000,2) * JtoEV # divide by 1000 to get mass,velocity to mks
     yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
     grnComps = grainsCOMP[grain]["reactants"]
