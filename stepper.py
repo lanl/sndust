@@ -234,7 +234,7 @@ class Stepper(object):
         v_gas = double(self._gas.Velocity(t))
         T = double(self._gas.Temperature(t)) # this cast is necessary, not sure why just yet
         dT = double(self._gas.Temperature(t, derivative=1))
-
+        
         rho = self._gas.Density(t)
         drho = self._gas.Density(t, derivative=1)
 
@@ -251,7 +251,6 @@ class Stepper(object):
         shock = self._gas._fS(t)
 
         if shock >= 0.5:
-           prnt('shock')
            rho = self._gas.Density(t)
            T = self._gas.Temperature(t)
            gas_name = list(self._net._species_gas)
@@ -262,10 +261,8 @@ class Stepper(object):
            v_shock = np.sqrt(7.0/5.0 *press/rho)
            idx = self._net._NG + self._net._ND * N_MOMENTS + self._net._ND * numBins
            y[idx: idx + numBins*self._net._ND] = 3.0/4.0 * v_shock
-           prnt(y)
 
-
-        dadt, d_conc, dydt = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime,dydt)
+        dadt, d_conc, dydt = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime, dydt)
         conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
         erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc, self.dTime)
 

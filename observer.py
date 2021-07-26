@@ -15,6 +15,7 @@ from network import Network
 from gas import SNGas
 from stepper import Stepper, dust_calc
 #from solver import Solver
+from printer import *
 
 OBS_LINESEP1 = "----------------------------------\n"
 OBS_LINESEP2 = "==================================\n"

@@ -39,7 +39,7 @@ def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime, dydt):
     n_tot = sum([gas_conc[Sidx] * AMU[s.strip()] for Sidx,s in enumerate(gas_name)]) # total number density of the gas
     grain_names = net._species_dust
     dest, g_change, new_dydt = calc_TOTAL_dadt(grain_names,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume,y,dTime, dydt)
-    return dest, g_change, dydt # dest is in cm
+    return dest, g_change, new_dydt # dest is in cm
 
 # here, we take the gas velocity and calculate s_i to determine if we have thermal or non thermal sputtering. the cutoff is assigned to s_i = 10
 def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime, dydt):
@@ -62,17 +62,15 @@ def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Net
             if si > 1:
                 # (GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGas,net: Network,volume, y,dTime)
                 dest, del_g = non_THERMAL_dadt(GRidx, grain, sizeIDX, T, n_tot, gas_conc, gas_name, v_d[sizeIDX], g, net, volume, y,dTime)
-                prnt(dest)
                 #non_THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume, y,dTime)
             else:
                 dest, del_g = THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g,net,volume,y)
-                #prnt(dest)
                 #THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g,net,volume,y)
 
             destruct_list[GRidx*numBins + sizeIDX] = dest
             g_c0_change += del_g
             cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf  # units of cm
-            dydt[net._NG + net.ND * numBins + GRidx * numBins + sizeIDX] = calc_dvdt(n_tot,T, v["rhod"], gas_conc, gas_name, v_d[GRidx*numBins+sizeIDX], cross_sec, g, net, volume) * dTime # cm/s
+            dydt[net._NG + net.ND * numBins + GRidx * numBins + sizeIDX] = calc_dvdt(n_tot,T, v["rhod"], gas_conc, gas_name, v_d[GRidx*numBins+sizeIDX], cross_sec, g, net) * dTime # cm/s
     return destruct_list, g_c0_change, dydt
 
 def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y):
@@ -129,15 +127,15 @@ def non_THERMAL_dadt(GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGa
         m_sp = m_sp + coef*yp.Y(x)/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # grams
     dadt = dadt + A_i * yp.Y(x) # units of # of atoms -- unitless
     dadt = dadt * (m_sp * v_d) / (2. * v["rhod"]) * n_gas # cm/s
-    return dadt, g_c0_change
+    return -1*np.abs(dadt), g_c0_change
 
 
-def calc_dvdt(n_gas, T, rho_d, gas_conc, gas_name,v_gas, a_cross, g: SNGas, net: Network, volume):
+def calc_dvdt(n_gas, T, rho_d, gas_conc, gas_name,v_d, a_cross, g: SNGas, net: Network):
     G_tot = np.zeros(len(gas_conc))
-    A = gas_conc * volume #unitless
+    A = gas_conc / n_gas #unitless
     for idx,val in enumerate(A):
-        m_i = AMU[gas_name[idx]]*amu2g # m_i in grams, not sure if mass of the gas species (1 molecule) or the total mass of the gas species
-        s = np.sqrt(m_i * v_gas**2 /(2*kB_erg*T)) # s_i is unitless
+        m_i = AMU[gas_name[idx]]*amu2g # m_i in grams
+        s = np.sqrt(m_i * v_d**2 /(2*kB_erg*T)) # s_i is unitless
         G_tot[idx] = 8*s/(3*np.sqrt(np.pi))*np.sqrt((1+9*np.pi*s**2/64)) # unitless
     dvdt = -3*n_gas*kB_erg*T/(2*a_cross*rho_d)*np.sum(A*G_tot) # units of cm/s^2
     return dvdt
