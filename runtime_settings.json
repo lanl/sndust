@@ -1,6 +1,6 @@
 {
   "particle_inputfile"    : "./data/TEMP_initdata.hdf5",
-  "hydrorun_inputfile"    : "./data/TEMP_hydrorundata.dat",
+  "hydrorun_inputfile"    : "./data/shock_mod2.dat",
   "network_file"          : "./data/easy_reactions.json",
   "abs_tol"               : 1.0E-12,
   "rel_tol"               : 1.0E-12,
@@ -13,6 +13,7 @@
   "align_tend_value"  : 31556926,
   "align_tend_resolution": 1,
   "restart"              : 0,
-  "res_zones"            : [541]
+  "res_zones"            : [541],
+  "main_zones"           : [100,300]
 }
 

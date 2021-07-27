@@ -91,12 +91,14 @@ if __name__ == "__main__":
         settings = json.load(jfs)
 
     model_id = 2 # note, zone ids from 0 ... 1545
-    zone_ids = np.arange(0, 100) # TODO: use particle data to get all zone numbers
+    lim = settings["main_zones"]
+    zone_ids = np.arange(lim[0], lim[1]) # TODO: use particle data to get all zone numbers
+    print(zone_ids)
     restart = settings["restart"]
     if restart:
         zone_ids = settings["res_zones"]
     
-    if 0:
+    if 1:
         # TODO: better schedualing
         with MPIPoolExecutor(max_workers=args.ncpu) as pool:
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
