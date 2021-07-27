@@ -5,7 +5,7 @@ from simulation_constants import *
 import h5py as h
 import matplotlib.mlab as mlab
 
-files = glob.glob("*.hdf5")
+files = glob.glob("output_M002/*1541.hdf5")
 
 bins = np.zeros(numBins)
 
@@ -17,6 +17,19 @@ for zone in files:
 	bins += y
 	dataF.close()
 
-print(bins)
+sizes = np.zeros(numBins)
 
+fig = plt.figure()
+#ax = fig.add_axes([0,0,1,1])
+
+for i,val in enumerate(sizes):
+	sizes[i] = (edges[i] + edges[i+1])/2.0
+
+tot = np.sum(bins)
+bins = bins/tot
+
+plt.xscale('log')
+plt.bar(sizes, bins)
+
+plt.show()
 
