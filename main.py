@@ -40,7 +40,7 @@ def duster(settings, model_id, zone_id):
     t_end = p.times[p.last_idx]
 
     if restart:
-        fName = './output_M'+str(model_id).zfill(3)+'/old'+str(zone_id).zfill(4)+'.hdf5'
+        fName = './output_M'+str(model_id).zfill(3)+'/dust'+str(zone_id).zfill(4)+'.hdf5'
         resF = h.File(fName,'r')
         keys = list(resF['root'].keys())
         data = resF['root'][keys[-1]][-1]
@@ -95,8 +95,8 @@ if __name__ == "__main__":
     zone_ids = np.arange(lim[0], lim[1]) # TODO: use particle data to get all zone numbers
     print(zone_ids)
     restart = settings["restart"]
-    if restart:
-        zone_ids = settings["res_zones"]
+    #if restart:
+    #    zone_ids = settings["res_zones"]
     
     if 1:
         # TODO: better schedualing
