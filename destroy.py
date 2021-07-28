@@ -58,7 +58,7 @@ def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Net
                 continue
             v = data[grain]
             m_i = ions['C']["mi"] * amu2g
-            si = np.sqrt(m_i * (v_d[sizeIDX] ** 2) / (2 * kB_erg * T))
+            si = np.sqrt(m_i * (v_d[GRidx*numBins + sizeIDX] ** 2) / (2 * kB_erg * T))
             if si > 1:
                 # (GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGas,net: Network,volume, y,dTime)
                 dest, del_g = non_THERMAL_dadt(GRidx, grain, sizeIDX, T, n_tot, gas_conc, gas_name, v_d[sizeIDX], g, net, volume, y,dTime)

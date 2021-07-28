@@ -26,6 +26,6 @@ dust_testing_file = "temporary_dust_data.dat"
 dTime = 0 # global timestep
 
 numBins = 20 # number of size bins
-bin_low = -2 # 10^x in angstroms
+bin_low = -10 # 10^x in angstroms
 bin_high = 7 # 10^x in angstroms
 edges = np.logspace(bin_low, bin_high, numBins + 1) # the 1st bin is _edges[1-1] to _edges[1], the last is _edges[numBins-1] to _edges[numBins] 

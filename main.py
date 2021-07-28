@@ -83,7 +83,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--print-keys", action="store_true")
     ap.add_argument("-c", "--configfile", type=str, required=True)
-    ap.add_argument("-N", "--ncpu", type=int, default=3)
+    ap.add_argument("-N", "--ncpu", type=int, default=1)
 
     args = ap.parse_args()
 
@@ -93,18 +93,17 @@ if __name__ == "__main__":
     model_id = 2 # note, zone ids from 0 ... 1545
     lim = settings["main_zones"]
     zone_ids = np.arange(lim[0], lim[1]) # TODO: use particle data to get all zone numbers
-    print(zone_ids)
     restart = settings["restart"]
     if restart:
         zone_ids = settings["res_zones"]
     
-    if 1:
+    if 0:
         # TODO: better schedualing
         with MPIPoolExecutor(max_workers=args.ncpu) as pool:
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
                 print(result)
     else:
-        res_msg = duster(settings, model_id, 1541)
+        res_msg = duster(settings, model_id, 541)
         print(res_msg)
         # for iz in zone_ids:
         #     duster(settings, model_id, iz)
