@@ -39,17 +39,21 @@ def duster(settings, model_id, zone_id):
     t_start = p.times[p.first_idx]
     t_end = p.times[p.last_idx]
 
+    print(restart)
+
     if restart:
-        fName = './output_M'+str(model_id).zfill(3)+'/old'+str(zone_id).zfill(4)+'.hdf5'
+        print('restart')
+        fName = './output_M'+str(model_id).zfill(3)+'/dust'+str(zone_id).zfill(4)+'.hdf5'
         resF = h.File(fName,'r')
         keys = list(resF['root'].keys())
-        data = resF['root'][keys[-1]][-1]
+        data = list(resF['root'][keys[-1]][-1])
         t_start = data[1]
-        NG = net._NG+7
-        conc = list(data)[7:NG]
-        mom = list(data)[NG:NG+net._ND]
-        bins = list(data)[NG+net._ND*2:NG+net._ND*3]
+        NG = net._NG
+        conc = np.array(data[7:NG+7])
+        mom = data[NG+7:NG+7+net._ND]
+        bins = data[NG+7+2+net._ND*2:]
         gas._c0 = np.append(np.append(conc,mom),bins)
+        print(gas._c0)
         resF.close()
 
     timeSTEP = settings["max_dt"]
@@ -58,7 +62,7 @@ def duster(settings, model_id, zone_id):
     spec    = SolverSpec(time_start = t_start, time_bound = t_end, absolute_tol = settings["abs_tol"], \
                          relative_tol = settings["rel_tol"], max_timestep = settings["max_dt"])
 
-    print(f"time_start = {p.times[p.first_idx]}")
+    print(f"time_start = {t_start}")
 
     solv    = Solver(spec, step)
     obs     = Observer(output_f, net, gas, step, solv, settings)
