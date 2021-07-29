@@ -126,7 +126,7 @@ class Network:
 
     @property
     def solution_size(self) -> np.int32:
-        return self._NG + N_MOMENTS * self._ND + self._ND * numBins # trying to get bins
+        return self._NG + N_MOMENTS * self._ND + self._ND * numBins * 2 # trying to get bins
 
     @property
     def NG(self):

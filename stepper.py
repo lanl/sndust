@@ -157,22 +157,23 @@ def expand(xpand, y, dydt):
 #     for i in range(y.size):
 #         dydt[i] = xpand * y[i]
 
-#@jit((double[:], double[:], double[:], int32, int32, numba_dust_calc[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
-def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime):
+@jit((double[:], double[:], double[:], int32, int32, numba_dust_calc[:], double, numba_dust_type[:]), debug=S_DEBUG, nopython=S_NOPYTHON, parallel=S_PARALLEL, fastmath=S_FASTMATH)
+def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime, dust_t):
     start = NG + NDust * N_MOMENTS
     for i in prange(NDust):
         #check if new grain, calculate size, and add it to the correct bin
         if dydt[NG + (i*N_MOMENTS +1)] != 0.0:
-            new_grn_sz = dust_calc[i][-1]**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
+            new_grn_sz = dust_t[i].a0 * dust_calc[i].ncrit**(onethird)
+            #dust_t[i][15] * dust_calc[i][-1]**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
             idx = np.where(edges > new_grn_sz)[0][0] -1
-            dydt[start + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1] ## 1 is cbar
-            #prnt('new grain '+str(dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1]))
+            dydt[start + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i].cbar
+            #dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1] ## 1 is cbar
         for sizeIDX in list(range(numBins-1)):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
             shrink = dadt[i*numBins + sizeIDX]*dTime
-            grow = dust_calc[i][-2]*dTime ## -2 is dadt
+            grow = dust_calc[i].dadt*dTime
+            #dust_calc[i][-2]*dTime ## -2 is dadt
             new_size = grn_size + shrink + grow
-            #prnt('shrink '+str(shrink)+', grow '+str(grow)+', grain size '+str(grn_size))
             if new_size > edges[sizeIDX+1]:
                 dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
                 dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
@@ -264,7 +265,7 @@ class Stepper(object):
 
         dadt, d_conc, dydt = destroy(self._gas, self._net, vol, y, T, v_gas, self.dTime, dydt)
         conc_update(d_conc, dydt[0:self._net.NG], y[0:self._net.NG])
-        erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc, self.dTime)
+        erode_grow(dadt, y, dydt, self._net.NG, self._net.ND, self._dust_calc, self.dTime, self._dust_par)
 
         return dydt
 
