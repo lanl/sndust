@@ -164,22 +164,22 @@ def erode_grow(dadt, y, dydt, NG, NDust, dust_calc, dTime, dust_t):
         #check if new grain, calculate size, and add it to the correct bin
         if dydt[NG + (i*N_MOMENTS +1)] != 0.0:
             new_grn_sz = dust_t[i].a0 * dust_calc[i].ncrit**(onethird)
-            #dust_t[i][15] * dust_calc[i][-1]**(onethird) ## -1 is ncrit #dust_calc[i].Js * dust_calc[i].ncrit ** (1/3)
             idx = np.where(edges > new_grn_sz)[0][0] -1
             dydt[start + (i*numBins + idx)] += dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i].cbar
-            #dydt[NG+(i*N_MOMENTS+0)] * dust_calc[i][1] ## 1 is cbar
-        for sizeIDX in list(range(numBins-1)):
+        for sizeIDX in list(range(numBins)):
             grn_size = (edges[sizeIDX] + edges[sizeIDX + 1]) * onehalf
             shrink = dadt[i*numBins + sizeIDX]*dTime
             grow = dust_calc[i].dadt*dTime
-            #dust_calc[i][-2]*dTime ## -2 is dadt
             new_size = grn_size + shrink + grow
             if new_size > edges[sizeIDX+1]:
-                dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
-                dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
+                if sizeIDX == (numBins-1):
+                    dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
+                else:
+                    dydt[start + (i*numBins) + sizeIDX + 1] += y[start + (i*numBins) + sizeIDX]
+                    dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
             elif new_size < edges[sizeIDX]:
                 if sizeIDX == 0:
-                    continue
+                    dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]
                 else:
                     dydt[start + (i*numBins) + sizeIDX - 1] += y[start + (i*numBins) + sizeIDX]
                     dydt[start + (i*numBins) + sizeIDX] -= y[start + (i*numBins) + sizeIDX]

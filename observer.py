@@ -55,7 +55,8 @@ class Observer(object):
             *[ (f"N_{s}", np.float64) for s in self._net._species_gas ],
             *[ (f"M_{s}", np.float64, (N_MOMENTS,)) for s in self._net._species_dust ],
             *[ (f"calc_{s}", dust_calc) for s in self._net._species_dust ],
-            *[ (f"sizeBin_{s}", np.float64, (numBins,)) for s in self._net._species_dust ] # trying to add size bins to int
+            *[ (f"sizeBin_{s}", np.float64, (numBins,)) for s in self._net._species_dust ], # trying to add size bins to int
+            *[ (f"velo_{s}", np.float64, (numBins,)) for s in self._net._species_dust ]
         ])
 
         self._store_chunk = rt_settings["write_hdf5_every"] // rt_settings["store_hdf5_every"]
@@ -71,7 +72,7 @@ class Observer(object):
             grp.attrs["dust_radius"] = [ _d["parameters"]["a0"].a0 for _d in self._net._reactions_dust]
 
         with open(self._histfname, "w") as lf:
-            print(f"hisotry file for {self._gas._sid}", file=lf)
+            print(f"history file for {self._gas._sid}", file=lf)
             print(OBS_LINESEP2, file=lf)
 
         self._tot_storetime = 0
@@ -95,9 +96,11 @@ class Observer(object):
         for i, s in enumerate(self._net._species_dust):
             _didx = self._net._NG + i * N_MOMENTS
             _sidx = self._net._NG + len(self._net._species_dust) * N_MOMENTS + i * numBins
+            _vidx = self._net._NG + len(self._net._species_dust) * N_MOMENTS + len(self._net._species_dust) * numBins + i * numBins
             frame[f"M_{s}"] = self._ode.y[_didx : _didx + N_MOMENTS]
             frame[f"calc_{s}"] = self._step._dust_calc[i]
             frame[f"sizeBin_{s}"] = self._ode.y[_sidx : _sidx + numBins] # trying to add size bins to int
+            frame[f"velo_{s}"] = self._ode.y[_vidx:_vidx + numBins]
         return frame
 
     def _store_h5dat(self, frame):
