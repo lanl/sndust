@@ -96,10 +96,11 @@ class Observer(object):
         for i, s in enumerate(self._net._species_dust):
             _didx = self._net._NG + i * N_MOMENTS
             _sidx = self._net._NG + len(self._net._species_dust) * N_MOMENTS + i * numBins
+            _vidx = self._net._NG + len(self._net._species_dust) * N_MOMENTS + len(self._net._species_dust) * numBins + i * numBins
             frame[f"M_{s}"] = self._ode.y[_didx : _didx + N_MOMENTS]
             frame[f"calc_{s}"] = self._step._dust_calc[i]
             frame[f"sizeBin_{s}"] = self._ode.y[_sidx : _sidx + numBins] # trying to add size bins to int
-            frame[f"velo_{s}"] = self._ode.y[_sidx +numBins:]
+            frame[f"velo_{s}"] = self._ode.y[_vidx:_vidx + numBins]
         return frame
 
     def _store_h5dat(self, frame):
