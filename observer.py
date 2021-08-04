@@ -75,6 +75,7 @@ class Observer(object):
             print(f"history file for {self._gas._sid}", file=lf)
             print(OBS_LINESEP2, file=lf)
 
+
         self._tot_storetime = 0
         self._tot_dumptime = 0
         self._tot_screentime = 0

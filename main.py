@@ -27,7 +27,7 @@ def duster(settings, model_id, zone_id):
 
     output_d = f"output_M{model_id:03d}"
     os.makedirs(output_d, exist_ok=True)
-    output_f = os.path.join(output_d, f"dust{zone_id:04}")
+    output_f = os.path.join(output_d, f"rest4{zone_id:04}")
 
     net     = Network(settings["network_file"])
 
@@ -39,10 +39,8 @@ def duster(settings, model_id, zone_id):
     t_start = p.times[p.first_idx]
     t_end = p.times[p.last_idx]
 
-    print(restart)
-
     if restart:
-        print('restart')
+        output_f = os.path.join(output_d, f"rest5{zone_id:04}")
         fName = './output_M'+str(model_id).zfill(3)+'/dust'+str(zone_id).zfill(4)+'.hdf5'
         resF = h.File(fName,'r')
         keys = list(resF['root'].keys())
@@ -51,9 +49,8 @@ def duster(settings, model_id, zone_id):
         NG = net._NG
         conc = np.array(data[7:NG+7])
         mom = data[NG+7:NG+7+net._ND]
-        bins = data[NG+7+2+net._ND*2:]
+        bins = data[NG+7+net._ND*2:]
         gas._c0 = np.append(np.append(conc,mom),bins)
-        print(gas._c0)
         resF.close()
 
     timeSTEP = settings["max_dt"]
@@ -98,10 +95,8 @@ if __name__ == "__main__":
     lim = settings["main_zones"]
     zone_ids = np.arange(lim[0], lim[1]) # TODO: use particle data to get all zone numbers
     restart = settings["restart"]
-    if restart:
-        zone_ids = settings["res_zones"]
     
-    if 0:
+    if args.ncpu!=1:
         # TODO: better schedualing
         with MPIPoolExecutor(max_workers=args.ncpu) as pool:
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
