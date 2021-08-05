@@ -43,14 +43,15 @@ def destroy(g: SNGas, net: Network, volume, y, T, v_gas,dTime, dydt):
 
 # here, we take the gas velocity and calculate s_i to determine if we have thermal or non thermal sputtering. the cutoff is assigned to s_i = 10
 def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y, dTime, dydt):
-    v_d = y[net._NG + net._ND * N_MOMENTS + net._ND * numBins: net._NG + net._ND * N_MOMENTS + net._ND * numBins +numBins * net._ND]
+    sz_idx0 = net._NG + net._ND * N_MOMENTS
+    v_d = y[sz_idx0 + net._ND * numBins: sz_idx0 + net._ND * numBins * 2]
     destruct_list = np.zeros(len(grain_list)*numBins)
     g_c0_change = np.zeros(len(gas_name))
 
     for sizeIDX in list(range(numBins)):
         for GRidx,grain in enumerate(grain_list):
             #if we have no grains, skip
-            if y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+sizeIDX] <= 0:
+            if y[sz_idx0 + GRidx * numBins + sizeIDX] <= 0:
                 continue
             #if we don't have data for the grain, skip
             grain = str(grain.replace('(s)',''))
@@ -60,20 +61,16 @@ def calc_TOTAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g: SNGas,net: Net
             m_i = ions['C']["mi"] * amu2g
             si = np.sqrt(m_i * (v_d[GRidx*numBins + sizeIDX] ** 2) / (2 * kB_erg * T))
             if si > 1:
-                # (GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGas,net: Network,volume, y,dTime)
-                dest, del_g = non_THERMAL_dadt(GRidx, grain, sizeIDX, T, n_tot, gas_conc, gas_name, v_d[sizeIDX], g, net, volume, y,dTime)
-                #non_THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,v_gas,g,net,volume, y,dTime)
+                dest, del_g = non_THERMAL_dadt(GRidx, grain, sizeIDX, T, n_tot, gas_conc, gas_name, v_d[GRidx*numBins + sizeIDX], net, volume, y,dTime)
             else:
-                dest, del_g = THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g,net,volume,y)
-                #THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g,net,volume,y)
-
-            destruct_list[GRidx*numBins + sizeIDX] = dest
+                dest, del_g = THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,net,volume,y)
+            destruct_list[GRidx * numBins + sizeIDX] = dest
             g_c0_change += del_g
             cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf  # units of cm
-            dydt[net._NG + net.ND * numBins + GRidx * numBins + sizeIDX] = calc_dvdt(n_tot,T, v["rhod"], gas_conc, gas_name, v_d[GRidx*numBins+sizeIDX], cross_sec, g, net) * dTime # cm/s
+            dydt[sz_idx0 + net.ND * numBins + GRidx * numBins + sizeIDX] = calc_dvdt(n_tot,T, v["rhod"], gas_conc, gas_name, v_d[GRidx*numBins+sizeIDX], cross_sec)
     return destruct_list, g_c0_change, dydt
 
-def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y):
+def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,net: Network,volume, y):
     g_c0_change = np.zeros(len(gas_name))
     v = data[grain]
     dadt = 0
@@ -98,18 +95,16 @@ def THERMAL_dadt(grain,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y
         g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) # num_grains_dest
         # adding the mass of the sputtered species to m_sp
         m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
-    # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitle
     # dadt is in cm/s
     dadt = dadt + pref * integral
     # now it is in
     dadt = dadt * (-1) * m_sp / (2. * v["rhod"]) * n_tot # in cm/s, the last part is the coeff outside the sum and is unitless
     return dadt, g_c0_change
 
-def non_THERMAL_dadt(GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGas,net: Network,volume, y,dTime):
+def non_THERMAL_dadt(GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,net: Network,volume, y,dTime):
     g_c0_change = np.zeros(len(gas_name))
     v = data[grain]
     cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf  # units of cm
-    #v_d = calc_dvdt(n_gas,T, v["rhod"], gas_conc, gas_name, v_gas, cross_sec, g, net, volume) * dTime # units of cm/s
     grain = str(grain.replace('(s)',''))
     dadt = 0
     m_sp = 0
@@ -130,7 +125,7 @@ def non_THERMAL_dadt(GRidx, grain, sizeIDX,T,n_gas,gas_conc,gas_name,v_d,g: SNGa
     return -1*np.abs(dadt), g_c0_change
 
 
-def calc_dvdt(n_gas, T, rho_d, gas_conc, gas_name,v_d, a_cross, g: SNGas, net: Network):
+def calc_dvdt(n_gas, T, rho_d, gas_conc, gas_name,v_d, a_cross):
     G_tot = np.zeros(len(gas_conc))
     A = gas_conc / n_gas #unitless
     for idx,val in enumerate(A):
@@ -140,86 +135,3 @@ def calc_dvdt(n_gas, T, rho_d, gas_conc, gas_name,v_d, a_cross, g: SNGas, net: N
     dvdt = -3*n_gas*kB_erg*T/(2*a_cross*rho_d)*np.sum(A*G_tot) # units of cm/s^2
     return dvdt
 
-
-
-# biscaro et. al 2016 equation 14
-#def THERMAL_dadt(grain_list,T,n_tot,gas_conc,gas_name,g: SNGas,net: Network,volume, y):
-#    g_c0_change = np.zeros(len(gas_name))
-#    destruct_list = np.zeros(len(grain_list)*numBins)
-#    for GRidx,grain in enumerate(grain_list):
-#        sizeBins = y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins:len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+numBins]
-#        num_grains_dest = np.count_nonzero(sizeBins)
-#        if all(amt == 0 for amt in sizeBins):
-#            #prnt('no grain to destroy, skip')
-#            continue
-#        grain = str(grain.replace('(s)',''))
-#        if grain not in data:
-#            continue
-#        v = data[grain]
-#        dadt = 0
-#        m_sp = 0
-#        # here this is the argument in the summation
-#        for idx,val in enumerate(gas_conc):
-#            i_gas_name = list(gas_name)[idx]
-#            A_i = val / n_tot # #/cm^3 * cm^3 = # of particles -- unitless
-#            m_i = ions[i_gas_name]["mi"] * amu2g # mass of gas species-not sure if it should be mulitplied by the abundance, in grams
-#            # pref is in cgs --  cm/s
-#            pref = A_i * np.sqrt( 8.0 * kB_erg * T / (np.pi * m_i)) # units in cm/s
-#            yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
-#            integral = quad(lambda x: x * np.exp(-x) * yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
-#            #sput_yield = quad(lambda x: yp.Y(x * kB_eV * T), a=yp.eth/(kB_eV * T) , b=np.infty)[0]
-#            grnComps = grainsCOMP[grain]["reactants"] 
-#            prod_coef = grainsCOMP[grain]["reactants_amount"]
-#            for cidx,coef in enumerate(prod_coef):
-#                sidx = net.sidx(grnComps[cidx])
-#                # calculate change in conecntrations = sputtered amount * coefficant / (volume * sum of coef)
-#                # number of sputtered atoms, multiplied by num_grn_dest to account for the number of this size bins effected
-#                g_c0_change[sidx] = integral*coef/(volume*np.sum(prod_coef)) * num_grains_dest 
-#                # adding the mass of the sputtered species to m_sp
-#                m_sp = m_sp + coef*integral/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # now it is in grams
-#            # *confused screeching* I think the integral should be unitless -- in biscaro, the integrand is unitless
-#            # dadt is in cm/s
-#            dadt = dadt + pref * integral
-#        # now it is in 
-#        dadt = dadt * (-1) * m_sp / (2. * v["rhod"]) * n_tot # in cm/s, the last part is the coeff outside the sum and is unitless
-#        destruct_list[GRidx*numBins:GRidx*numBins+numBins] = dadt
-#        empty = np.where(sizeBins == 0)
-#        # doing a check to set dadt = 0 if there wasn't a grain present at first
-#        for i in empty:
-#            destruct_list[GRidx*numBins + i] = 0
-#    return destruct_list, g_c0_change
-
-#will need to pass in an array or dictionary or all the abundances
-#def non_THERMAL_dadt(grain_list,T,n_gas,gas_conc,gas_name,v_gas,g: SNGas,net: Network,volume, y,dTime):
-#    g_c0_change = np.zeros(len(gas_name))
-#    destruct_list = np.zeros(len(grain_list)*numBins)
-#    # we need to look at each size bin b.c. dv/dt depends on the grain cross section
-#    for sizeIDX in list(range(numBins)):
-#        for GRidx,grain in enumerate(grain_list):
-#            if y[len(gas_conc)+N_MOMENTS*net._ND+GRidx*numBins+sizeIDX] == 0:
-#                #prnt('no grain to destroy, skip')
-#                continue
-#            grain = str(grain.replace('(s)',''))
-#            if grain not in data:
-#                continue
-#            v = data[grain]
-#            cross_sec = (edges[sizeIDX] + edges[sizeIDX+1]) * onehalf  # units of cm
-#            v_d = calc_dvdt(n_gas,T, v["rhod"], gas_conc, gas_name, v_gas, cross_sec, g, net, volume) * dTime # units of cm/s
-#            grain = str(grain.replace('(s)',''))
-#            dadt = 0
-#            m_sp = 0
-#            for idx,val in enumerate(gas_conc):
-#                i_gas_name = list(gas_name)[idx]
-#                A_i = val / n_tot # units of # of particles
-#                x = 1./2. * ions[i_gas_name]["mi"] * amu2g / 1000 * np.power(v_d /1000,2) * JtoEV # divide by 1000 to get mass,velocity to mks
-#                yp = Yield(u0 = v["u0"],md = v["md"],mi = ions[i_gas_name]["mi"],zd = v["zd"],zi = ions[i_gas_name]["zi"],K = v["K"])
-#                grnComps = grainsCOMP[grain]["reactants"]
-#                prod_coef = grainsCOMP[grain]["reactants_amount"]
-#                for cidx,coef in enumerate(prod_coef):
-#                    sidx = net.sidx(grnComps[cidx])
-#                    g_c0_change[sidx] = g_c0_change[sidx] + yp.Y(x)*coef/(volume*np.sum(prod_coef)) # units of # of atoms
-#                    m_sp = m_sp + coef*yp.Y(x)/(np.sum(prod_coef)) * AMU[grnComps[cidx]] * amu2g # grams
-#                dadt = dadt + A_i * yp.Y(x) # units of # of atoms -- unitless
-#            dadt = dadt * (m_sp * v_d) / (2. * v["rhod"]) * n_gas # cm/s
-#            destruct_list[int(GRidx)*numBins + sizeIDX] = dadt
-#    return destruct_list, g_c0_change

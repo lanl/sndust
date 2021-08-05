@@ -9,7 +9,7 @@ import json
 import h5py as h5
 import scipy.integrate as integrate
 
-from simulation_constants import N_MOMENTS,numBins
+from simulation_constants import N_MOMENTS, numBins, edges
 from physical_constants import sec2day
 from network import Network
 from gas import SNGas
@@ -73,6 +73,10 @@ class Observer(object):
 
         with open(self._histfname, "w") as lf:
             print(f"history file for {self._gas._sid}", file=lf)
+            sizes = np.zeros(numBins)
+            for i,val in enumerate(sizes):
+                sizes[i] = (edges[i] + edges[i+1])/2.0
+            print(f"size bins: {sizes}",file=lf)
             print(OBS_LINESEP2, file=lf)
 
 

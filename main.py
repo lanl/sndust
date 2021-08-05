@@ -7,7 +7,6 @@ from mpi4py.futures import MPIPoolExecutor
 import simulation_constants as sim_const
 from gas import SNGas
 from particle import Particle, load_particle
-# from network import Network
 from network import Network
 from stepper import Stepper
 from solver import SolverSpec, Solver
@@ -27,7 +26,7 @@ def duster(settings, model_id, zone_id):
 
     output_d = f"output_M{model_id:03d}"
     os.makedirs(output_d, exist_ok=True)
-    output_f = os.path.join(output_d, f"rest4{zone_id:04}")
+    output_f = os.path.join(output_d, f"dust{zone_id:04}")
 
     net     = Network(settings["network_file"])
 
@@ -40,8 +39,8 @@ def duster(settings, model_id, zone_id):
     t_end = p.times[p.last_idx]
 
     if restart:
-        output_f = os.path.join(output_d, f"rest5{zone_id:04}")
-        fName = './output_M'+str(model_id).zfill(3)+'/dust'+str(zone_id).zfill(4)+'.hdf5'
+        output_f = os.path.join(output_d, f"rest7{zone_id:04}")
+        fName = './output_M'+str(model_id).zfill(3)+'/rest6'+str(zone_id).zfill(4)+'.hdf5'
         resF = h.File(fName,'r')
         keys = list(resF['root'].keys())
         data = list(resF['root'][keys[-1]][-1])
@@ -93,7 +92,7 @@ if __name__ == "__main__":
 
     model_id = 2 # note, zone ids from 0 ... 1545
     lim = settings["main_zones"]
-    zone_ids = np.arange(lim[0], lim[1]) # TODO: use particle data to get all zone numbers
+    zone_ids = np.arange(lim[0], lim[1]) 
     restart = settings["restart"]
     
     if args.ncpu!=1:
@@ -104,8 +103,6 @@ if __name__ == "__main__":
     else:
         res_msg = duster(settings, model_id, 541)
         print(res_msg)
-        # for iz in zone_ids:
-        #     duster(settings, model_id, iz)
 
     print("done")
 
