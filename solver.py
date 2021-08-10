@@ -15,14 +15,12 @@ class SolverSpec(NamedTuple):
     max_timestep: np.float64
     absolute_tol: np.float64
     relative_tol: np.float64
-    #integrator: integrate.OdeSolver = integrate.DOP853
-    integrator: integrate.OdeSolver = integrate.LSODA
-#    integrator: integrate.OdeSolver = integrate.Radau
 
 class Solver(object):
     def __init__(self, spec: SolverSpec, stepper: Stepper):
-        self._ode = spec.integrator(stepper, spec.time_start, stepper.initial_value(), spec.time_bound, max_step=spec.max_timestep, \
-                                        atol=spec.absolute_tol, rtol=spec.relative_tol, vectorized=False)
+        #self._ode = spec.integrator(stepper, spec.time_start, stepper.initial_value(), spec.time_bound, max_step=spec.max_timestep, \
+        #                                atol=spec.absolute_tol, rtol=spec.relative_tol, vectorized=False)
+        self._ode = #
         self._steps = 0
         self._avg_steptime = 0.0
         self._tot_steptime = 0.0
