@@ -1,1 +1,0 @@
-from .fast_interp import interp1d

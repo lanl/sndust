@@ -60,6 +60,24 @@ def load_particle( h5fn: str, hydrofn: str, mdl_idx:int, p_idx: int) -> Particle
     p.volume = p.mass / p.densities[p.first_idx]
     return p
 
+def generate_test_particle() -> Particle:
+    p = Particle()
+
+    ntp = 1000
+
+    p.pid = 0
+    p.sid = f"test particle"
+
+    p.times = np.linspace(0, 1000, ntp)
+    p.temperatures = np.linspace(5000, 1000, ntp)
+    p.densities = 1.0E-6 * np.ones(ntp)
+    p.mass = 1.0E2*np.ones(ntp)
+    p.position = np.linspace(1.0, 1.0E5, ntp)
+    p.composition = {"C": 1.0E15}
+    p.volume = p.mass / p.densities[p.first_idx]
+
+    return p
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("inputfile", type=str, help="hdf5 input file")

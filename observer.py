@@ -13,7 +13,7 @@ from simulation_constants import N_MOMENTS
 from physical_constants import sec2day
 from network import Network
 from gas import SNGas
-from stepper import Stepper, dust_calc
+from stepper import Stepper, nucleation_calc_dt
 #from solver import Solver
 
 class Observer(object):
@@ -25,7 +25,7 @@ class Observer(object):
 
         self._gas = gas
         self._net = net
-        self._step = step
+        #self._step = step
         self._solv = solv
         self._ode = self._solv._ode
 
@@ -42,8 +42,7 @@ class Observer(object):
             ("volume", np.float64),
             ("x", np.float64),
             *[ (f"N_{s}", np.float64) for s in self._net._species_gas ],
-            *[ (f"M_{s}", np.float64, (N_MOMENTS,)) for s in self._net._species_dust ],
-            *[ (f"calc_{s}", dust_calc) for s in self._net._species_dust ]
+            *[ (f"M_{s}", np.float64, (N_MOMENTS,)) for s in self._net._species_dust ]
         ])
 
         self._store_chunk = self._write_every // self._store_every
@@ -69,14 +68,14 @@ class Observer(object):
     def _store_h5dat(self, step, time):
         if self._ode.t_old is None:
             return
-        rho = self._gas.Density(self._ode.t)
+        #rho = self._step.Density(self._ode.t)
         self._store[self._store_idx]["step"] = step
         self._store[self._store_idx]["time"] = time
         self._store[self._store_idx]["time_step"] = self._ode.t - self._ode.t_old
-        self._store[self._store_idx]["temperature"] = self._gas.Temperature(time)
-        self._store[self._store_idx]["density"] = rho
-        self._store[self._store_idx]["volume"] = self._gas.mass_0 / rho
-        self._store[self._store_idx]["x"] = self._gas._fx(time)
+        #self._store[self._store_idx]["temperature"] = self._step.Temperature(time)
+        #self._store[self._store_idx]["density"] = rho
+        #self._store[self._store_idx]["volume"] = self._step.InitialMass() / rho
+        self._store[self._store_idx]["x"] = 1 #self._gas._fx(time)
 
         for i, s in enumerate(self._net._species_gas):
             self._store[self._store_idx][f"N_{s}"] = self._ode.y[i]
@@ -84,7 +83,6 @@ class Observer(object):
         for i, s in enumerate(self._net._species_dust):
             _didx = self._net._NG + i * N_MOMENTS
             self._store[self._store_idx][f"M_{s}"] = self._ode.y[_didx : _didx + N_MOMENTS]
-            self._store[self._store_idx][f"calc_{s}"] = self._step._dust_calc[i]
         self._store_idx += 1
 
     def dump(self, step:int):
@@ -136,6 +134,8 @@ class Observer(object):
                 # s = self._store[-1]
                 s = self._store[self._store_idx - 1]
             except:
+                print(f"ERROR: no last data to get")
+                print(f"{self._ode.y}")
                 return
             _scrn = f"== {self._gas._sid}[{self._gas._pid}] solution at step {step:8d} ==\n"
             _syshead = ""
@@ -174,10 +174,10 @@ class Observer(object):
             #     _moms = ", ".join([ f"M_{i}[{m: >6.5E}]" for i, m in enumerate(v["moments"]) ])
             #     print(f"++ moments = {_moms}")
             for species in self._net._species_dust:
-                    _ckey = f"calc_{species}"
+                   # _ckey = f"calc_{species}"
                     _mkey = f"M_{species}"
                     _moms = ", ".join([ f"M_{i}[{m: >6.5E}]" for i, m in enumerate(s[_mkey]) ])
-                    _scrn += f"{species}: S[ {s[_ckey]['S']: >6.5E} ] J[ {s[_ckey]['Js']: >6.5E} ]\n"
+                    #_scrn += f"{species}: S[ {s[_ckey]['S']: >6.5E} ] J[ {s[_ckey]['Js']: >6.5E} ]\n"
                     _scrn += f"++++ moments ++++ {_moms}\n"
 
             tot_call_time = np.sum([self._tot_dumptime, self._tot_screentime, self._tot_storetime])

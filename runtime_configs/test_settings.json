@@ -1,0 +1,13 @@
+{
+  "particle_inputfile"  : "GENERATE_TEST",
+  "network_file"      : "./data/test_reactions.json",
+  "abs_tol"           : 1.0E-6,
+  "rel_tol"           : 1.0E-6,
+  "max_dt"            : 1.0E-2,
+  "screen_every"      : 100,
+  "store_every"       : 100,
+  "write_every"       : 1000,
+  "align_tend_value"  : 1000,
+  "align_tend_resolution": 1
+}
+

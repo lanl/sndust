@@ -39,21 +39,21 @@ def stack_arrays(arr1, arr2):
     return ret
 
 base_reaction_type = np.dtype([
-    ("nr", np.int32),
-    ("react_idx", np.int32, (MAX_REACTANTS,)),
+    ("nr", np.int64),
+    ("react_idx", np.int64, (MAX_REACTANTS,)),
     ("react_mass", np.float64, (MAX_REACTANTS,)),
     ("react_nu", np.float64, (MAX_REACTANTS,)),
-    ("np", np.int32),
-    ("prod_idx", np.int32, (MAX_PRODUCTS,)),
+    ("np", np.int64),
+    ("prod_idx", np.int64, (MAX_PRODUCTS,)),
     ("prod_mass", np.float64, (MAX_PRODUCTS,)),
     ("prod_nu", np.float64, (MAX_PRODUCTS,)),
-    ("active", np.int32)
+    ("active", np.int64)
 ], align=True)
 
 nucleation_type = np.dtype([
-    ("nkeysp", np.int32),
-    ("keysp_idx", np.int32, (MAX_REACTANTS)),
-    ("bin_idx", np.int32),
+    ("nkeysp", np.int64),
+    ("keysp_idx", np.int64, (MAX_REACTANTS)),
+    ("bin_idx", np.int64),
     ("A", np.float64),
     ("B", np.float64),
     ("sigma", np.float64),
@@ -63,7 +63,7 @@ nucleation_type = np.dtype([
     ("rho_p", np.float64)
 ], align=True)
 
-nucleation_numpy_type = extend_nptype(base_reaction_type, nucleation_type)
+nucleation_par_dt = extend_nptype(base_reaction_type, nucleation_type)
 
 class Network:
     def __init__(self, reaction_filename:str):
@@ -179,7 +179,7 @@ class Network:
                 for i in range(sub_npt["nkeysp"]):
                     sub_npt["keysp_idx"][i] = self._species[_ks[i]]
 
-                sub_npt["A"] = _par["A"]
+                sub_npt["A"] = _par["A"] * 1.0E4
                 sub_npt["B"] = _par["B"]
                 sub_npt["sigma"] = _par["sigma"]
                 sub_npt["a0"] = _par["a0"] * ang2cm
