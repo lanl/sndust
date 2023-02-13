@@ -24,7 +24,7 @@ def duster(settings, model_id, zone_id):
                       settings["hydrorun_inputfile"], \
                       model_id, zone_id)
 
-    output_d = f"output_M{model_id:03d}"
+    output_d = f"/scratch/stangl/tmp/lanl/output_M{model_id:03d}"
     os.makedirs(output_d, exist_ok=True)
     output_f = os.path.join(output_d, f"dust{zone_id:04}")
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             for result in pool.map(duster, it.repeat(settings), it.repeat(model_id), zone_ids):
                 print(result)
     else:
-        res_msg = duster(settings, model_id, 541)
+        res_msg = duster(settings, model_id, 1)#541)
         print(res_msg)
 
     print("done")

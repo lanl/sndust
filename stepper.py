@@ -76,14 +76,14 @@ def dust_state(calc_t, dust_t, y, T):
         ks_jdx = calc_t[i].ks_jdx
         ks_idx = dust_t[i].keysp_idx[ks_jdx]
         c1 = y[ks_idx]
-
         nks_idx = dust_t[i].react_idx[ dust_t[i].react_idx[:dust_t[i].nr] != ks_idx ]
         # holy shit this acutally works
         nks_jdx = np.where( dust_t[i].react_idx[np.arange(0, dust_t[i].nr)] != ks_idx )
-
         psum = np.sum(np.log(y[nks_idx] * kT * istdP) * calc_t[i].r_nu[nks_jdx])
         delg_reduced = (dust_t[i].A / T - dust_t[i].B) + psum
         calc_t[i].lnS = np.log( c1 * kT * istdP ) + delg_reduced
+        print(calc_t[i].lnS)
+        print(' -----------------')
         calc_t[i].catS = (stdP / kT) * np.exp(-delg_reduced)
 
         w = 1.0 + np.sum(dust_t[i].react_nu[nks_jdx])
